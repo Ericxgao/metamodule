@@ -19,7 +19,8 @@ class LPGCore : public SmartCoreProcessor<LPGInfo> {
 
 public:
 	LPGCore()
-		: sampleRate(48000.f), pingIn(0.5f, 2.f) {
+		: sampleRate(48000.f)
+		, pingIn(0.5f, 2.f) {
 		lpg.Init();
 		envelope.Init();
 	};
@@ -29,9 +30,9 @@ public:
 
 		bool pingPatched = false;
 
-		if(isPatched<PingIn>()) {
+		if (isPatched<PingIn>()) {
 			pingPatched = true;
-			if(pingEdge(pingIn(getInput<PingIn>().value()))){
+			if (pingEdge(pingIn(getInput<PingIn>().value()))) {
 
 				envelope.Trigger();
 			}
@@ -47,17 +48,16 @@ public:
 		const auto level = add_cv_and_pot(getInput<LevelCvIn>(), getState<LevelKnob>());
 
 		const float short_decay = (200.0f * 1.f) / sampleRate * LPG::stmlib::SemitonesToRatio(-96.0f * decay);
-    	const float decay_tail = (20.0f * 1.f) / sampleRate * LPG::stmlib::SemitonesToRatio(-72.0f * decay + 12.0f * lpg_colour) - short_decay;
+		const float decay_tail =
+			(20.0f * 1.f) / sampleRate * LPG::stmlib::SemitonesToRatio(-72.0f * decay + 12.0f * lpg_colour) -
+			short_decay;
 		const float attack = (440.0f / 8.f) / sampleRate * 0.25f * LPG::stmlib::SemitonesToRatio(0.f) * float(1) * 2.0f;
 
-		
-
-		if(pingPatched) {
+		if (pingPatched) {
 			envelope.ProcessPing(attack, short_decay, decay_tail, lpg_colour);
 		} else {
 			envelope.ProcessLP(level, short_decay, decay_tail, lpg_colour);
 		}
-		
 
 		lpg.Process(envelope.gain(), envelope.frequency(), envelope.hf_bleed(), &in, 1);
 
@@ -77,15 +77,11 @@ public:
 private:
 	float sampleRate;
 
-private:
 	plaits::LowPassGate lpg;
 	plaits::LPGEnvelope envelope;
 
-private:
 	FlipFlop pingIn;
 	EdgeDetector pingEdge;
-
-private:
 };
 
 } // namespace MetaModule
