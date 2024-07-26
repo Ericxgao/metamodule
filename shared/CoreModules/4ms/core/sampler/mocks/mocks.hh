@@ -67,7 +67,7 @@ struct LedElement {
 		: val{data} {
 	}
 
-	void set(uint8_t v) {
+	void set(uint8_t v) const {
 		val = v;
 	}
 };

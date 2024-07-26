@@ -1,28 +1,30 @@
-#include "CoreModules/elements/base_element.hh"
-// #include "src/flags.hh"
 #include "src/controls.hh"
+#include <cmath>
+
+// #include "src/flags.hh"
 // #include "src/params.hh"
-// #include "src/looping_delay.hh"
 
 namespace MetaModule
 {
 
-template<class Parent, class Mapping>
+template</*class Parent,*/ class Mapping>
 class SamplerChannel {
-	Parent *parent;
+	// Parent *parent;
 
 public:
-	SamplerChannel(Parent *parent_)
-		: parent(parent_) {
-	}
+	SamplerChannel() = default;
+	// SamplerChannel(Parent *parent_)
+	// 	: parent(parent_) {
+	// }
 
 	void update() {
 	}
 
 	void set_samplerate(float sr) {
-		auto newSampleRate = uint32_t(std::round(sr));
-		if (newSampleRate != sampleRate) {
-			sampleRate = newSampleRate;
+		auto new_sample_rate = uint32_t(std::round(sr));
+		if (new_sample_rate != sample_rate) {
+			sample_rate = new_sample_rate;
+			controls.set_samplerate(sample_rate);
 			// sampler.set_samplerate(sampleRate);
 		}
 	}
@@ -37,7 +39,7 @@ public:
 				controls.pots[SamplerKit::StartPot] = val * 4095;
 			} break;
 
-			case (Mapping::LengthPot): {
+			case (Mapping::LengthKnob): {
 				controls.pots[SamplerKit::LengthPot] = val * 4095;
 			} break;
 
@@ -64,8 +66,10 @@ public:
 	}
 
 private:
-	float sampleRate = 48000;
+	float sample_rate = 48000;
 	SamplerKit::Controls controls;
+
+	static constexpr float GateThreshold = 1.0f;
 };
 
 } // namespace MetaModule

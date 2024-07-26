@@ -1,6 +1,6 @@
 #pragma once
 #include "elements.hh"
-#include "mocks/mocks.hh"
+#include "sampler/mocks/mocks.hh"
 
 namespace SamplerKit
 {
