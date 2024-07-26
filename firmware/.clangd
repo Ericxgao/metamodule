@@ -29,6 +29,13 @@ CompileFlags:
         "-I../src/medium",
         "-I../lib/lvgl/lvgl",
         "-I../lib/cmsis/Core_A/Include",
+        "-Imetamodule-plugin-sdk/metamodule-core-interface",
+        "-I../metamodule-plugin-sdk/metamodule-core-interface",
+        "-I../../metamodule-plugin-sdk/metamodule-core-interface",
+        "-I../",
+        "-I../../",
+        "-I../../../",
+        "-I../../../../",
         "-DSTM32MP1",
         "-DCORE_CA7",
 	]
