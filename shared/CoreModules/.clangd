@@ -28,6 +28,16 @@ CompileFlags:
     "-I../../../shared/patch_convert/ryml",
     "-I../../shared/patch_convert/ryml",
     "-I../shared/patch_convert/ryml",
+    "-I../../../../../shared/patch_convert/ryml/rapidyaml/src",
+    "-I../../../../shared/patch_convert/ryml/rapidyaml/src",
+    "-I../../../shared/patch_convert/ryml/rapidyaml/src",
+    "-I../../shared/patch_convert/ryml/rapidyaml/src",
+    "-I../shared/patch_convert/ryml/rapidyaml/src",
+    "-I../../../../../shared/patch_convert/ryml/rapidyaml/ext/c4core/src",
+    "-I../../../../shared/patch_convert/ryml/rapidyaml/ext/c4core/src",
+    "-I../../../shared/patch_convert/ryml/rapidyaml/ext/c4core/src",
+    "-I../../shared/patch_convert/ryml/rapidyaml/ext/c4core/src",
+    "-I../shared/patch_convert/ryml/rapidyaml/ext/c4core/src",
   ]
   Remove: [
     "-ffold-simple-inlines",

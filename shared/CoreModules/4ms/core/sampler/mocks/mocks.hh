@@ -49,7 +49,7 @@ struct OutputPin {
 		value = true;
 	}
 
-	bool sideload_get() {
+	bool sideload_get() const {
 		return value;
 	}
 

@@ -35,6 +35,8 @@ public:
 	Mocks::RgbLed rev_led{rev_led_data.r, rev_led_data.g, rev_led_data.b};
 	Mocks::RgbLed bank_led{bank_led_data.r, bank_led_data.g, bank_led_data.b};
 
+	Mocks::LED playing_led; //TODO not in Sampler, only STS
+
 	uint32_t sample_rate = 48000;
 	uint32_t led_throttle_ctr = 0;
 
@@ -45,26 +47,6 @@ public:
 	uint16_t read_cv(CVAdcElement adcnum) {
 		return cvs[adcnum];
 	}
-
-	// void sideload_set_pot(unsigned pot_id, uint16_t val) {
-	// 	pots[pot_id] = val;
-	// }
-
-	// void sideload_set_cv(unsigned cv_id, uint16_t val) {
-	// 	cvs[cv_id] = val;
-	// }
-
-	// rgb sideload_read_play_led() {
-	// 	return play_led_data;
-	// }
-
-	// rgb sideload_read_rev_led() {
-	// 	return rev_led_data;
-	// }
-
-	// rgb sideload_read_bank_led() {
-	// 	return bank_led_data;
-	// }
 
 	void start() {
 	}
