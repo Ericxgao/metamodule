@@ -23,6 +23,7 @@ CompileFlags:
         "-DSIMULATOR",
 	]
 	Add: [
+        "-DMETAMODULE",
 		"--target=arm-none-eabi", 
         "-std=gnu++2b",
         "-I../src/console", #Needed because clangd16 infers compilation of some headers with a file from a different cmake target
