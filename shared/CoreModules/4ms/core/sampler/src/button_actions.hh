@@ -1,10 +1,10 @@
 #pragma once
 #include "controls.hh"
 #include "flags.hh"
-#include "log.hh"
+// #include "log.hh"
 #include "pot_state.hh"
 #include "settings.hh"
-#include "util/voct_calibrator.hh"
+// #include "util/voct_calibrator.hh"
 
 namespace SamplerKit
 {
@@ -32,7 +32,8 @@ struct ButtonActionHandler {
 		: flags{flags}
 		, controls{controls}
 		, settings{settings}
-		, pot_state{pot_state} {}
+		, pot_state{pot_state} {
+	}
 
 	// TODO: put all button ops in process() and check in each button combo for op_mode
 	void process(OperationMode op_mode, bool looping) {
@@ -198,6 +199,13 @@ struct ButtonActionHandler {
 					flags.set(Flag::BankNext);
 				}
 			}
+
+			for (auto &pot : pot_state) {
+				if (pot.moved_while_bank_down)
+					pot.is_catching_up = true;
+				pot.moved_while_bank_down = false;
+			}
+
 			ignore_bank_release = false;
 		}
 

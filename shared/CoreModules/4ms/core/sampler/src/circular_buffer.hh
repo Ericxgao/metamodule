@@ -29,6 +29,9 @@
 #include <cstdint>
 #include <span>
 
+namespace SamplerKit
+{
+
 struct CircularBuffer {
 	uint32_t in;
 	uint32_t out;
@@ -37,7 +40,9 @@ struct CircularBuffer {
 	uint32_t size; // should always be max-min
 	bool wrapping;
 
-	CircularBuffer() { init(); }
+	CircularBuffer() {
+		init();
+	}
 	void init() {
 		wrapping = 0;
 		in = min;
@@ -323,3 +328,5 @@ struct CircularBuffer {
 		}
 	}
 };
+
+} // namespace SamplerKit
