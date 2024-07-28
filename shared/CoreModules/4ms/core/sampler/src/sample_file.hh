@@ -28,9 +28,9 @@
 
 #pragma once
 #include "elements.hh"
-#include "ff.h"
+#include "mocks/ff.h"
+#include "mocks/sdcard.hh"
 #include "sample_type.hh"
-#include "sdcard.hh"
 #include <array>
 
 namespace SamplerKit

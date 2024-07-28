@@ -1,11 +1,13 @@
 #pragma once
-#include "brain_conf.hh"
-#include "conf/flash_layout.hh"
 #include "elements.hh"
-#include "flash_block.hh"
 #include "util/colors.hh"
-#include "util/wear_level.hh"
 #include <cstdint>
+
+#ifndef METAMODULE
+#include "conf/flash_layout.hh"
+#include "flash_block.hh"
+#include "util/wear_level.hh"
+#endif
 
 namespace SamplerKit
 {
@@ -42,7 +44,9 @@ struct CalibrationData {
 };
 
 struct CalibrationStorage {
+#ifndef METAMODULE
 	WearLevel<FlashBlock<SettingsFlashAddr, CalibrationData, 8>> flash;
+#endif
 	CalibrationData cal_data;
 	bool storage_is_ok = true;
 
