@@ -1,27 +1,24 @@
 #pragma once
-#include "audio_stream_conf.hh"
 #include "bank.hh"
-#include "bank_blink.hh"
+#include "brain_conf.hh"
 #include "button_actions.hh"
 #include "calibration_storage.hh"
 #include "controls.hh"
-#include "cv_calibration.hh"
 #include "elements.hh"
 #include "flags.hh"
 #include "leds.hh"
-#include "log.hh"
 #include "lut/pitch_pot_lut.h"
 #include "lut/voltoct.h"
-#include "palette.hh"
 #include "pot_state.hh"
-#include "sample_file.hh"
 #include "sample_pot_detents.hh"
 #include "settings.hh"
-#include "timing_calcs.hh"
 #include "tuning_calcs.hh"
 #include "util/colors.hh"
 #include "util/countzip.hh"
 #include "util/math.hh"
+#ifndef METAMODULE
+#include "cv_calibration.hh"
+#endif
 
 namespace SamplerKit
 {
@@ -37,7 +34,9 @@ struct Params {
 
 	CalibrationStorage &cal_storage;
 	CalibrationData &calibration{cal_storage.cal_data};
+#ifndef METAMODULE
 	CVCalibrator cv_cal{flags};
+#endif
 
 	Leds leds{flags, controls};
 	ButtonActionHandler button_handler{flags, controls, pot_state, settings};
@@ -85,7 +84,15 @@ struct Params {
 		controls.start();
 	}
 
-	void update() {
+	uint32_t time;
+
+	uint32_t get_time() {
+		return time;
+	}
+
+	void update(uint32_t time) {
+		this->time = time;
+
 		controls.update();
 
 		update_endout_jack();
@@ -107,7 +114,9 @@ struct Params {
 
 		button_handler.process(op_mode, looping);
 
+#ifndef METAMODULE
 		update_cv_cal();
+#endif
 
 		leds.update({op_mode, play_state, rec_state, reverse, looping, display_bank, settings.stereo_mode});
 	}
@@ -259,7 +268,7 @@ private:
 					play_state = PlayStates::PLAY_FADEDOWN;
 
 				voct_latch_value = cv_state[PitchCV].cur_val;
-				play_trig_timestamp = HAL_GetTick();
+				play_trig_timestamp = get_time();
 				flags.set(Flag::PlayTrigDelaying);
 			}
 		}
@@ -399,6 +408,7 @@ private:
 		bank = (next_diff < prev_diff) ? next : prev;
 	}
 
+#ifndef METAMODULE
 	void update_cv_cal() {
 		// Handle CV Cal mode
 		if (flags.take(Flag::EnterCVCalibrateMode)) {
@@ -443,6 +453,7 @@ private:
 				   calibration.cv_calibration_offset[PitchCV]);
 		}
 	}
+#endif
 
 private:
 	std::array<PotState, NumPots> pot_state;
