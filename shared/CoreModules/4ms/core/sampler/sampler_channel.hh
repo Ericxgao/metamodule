@@ -1,22 +1,20 @@
+#include "channel_mapping.hh"
 #include "src/controls.hh"
+#include "src/flags.hh"
+#include "src/params.hh"
 #include <cmath>
 #include <optional>
-
-// #include "src/flags.hh"
-// #include "src/params.hh"
 
 namespace MetaModule
 {
 
-template</*class Parent,*/ class Mapping>
+// TODO: Compare mapping as an object vs. type
 class SamplerChannel {
-	// Parent *parent;
 
 public:
-	SamplerChannel() = default;
-	// SamplerChannel(Parent *parent_)
-	// 	: parent(parent_) {
-	// }
+	SamplerChannel(STSChanMapping mapping)
+		: mapping{mapping} {
+	}
 
 	void update() {
 	}
@@ -31,38 +29,30 @@ public:
 	}
 
 	bool set_param(unsigned param_id, float val) {
-		switch (param_id) {
-			case Mapping::PitchKnob: {
-				controls.pots[SamplerKit::PitchPot] = val * 4095;
-			} break;
+		if (param_id == mapping.PitchKnob) {
+			controls.pots[SamplerKit::PitchPot] = val * 4095;
 
-			case Mapping::StartPosKnob: {
-				controls.pots[SamplerKit::StartPot] = val * 4095;
-			} break;
+		} else if (param_id == mapping.StartPosKnob) {
+			controls.pots[SamplerKit::StartPot] = val * 4095;
 
-			case Mapping::LengthKnob: {
-				controls.pots[SamplerKit::LengthPot] = val * 4095;
-			} break;
+		} else if (param_id == mapping.LengthKnob) {
+			controls.pots[SamplerKit::LengthPot] = val * 4095;
 
-			case Mapping::SampleKnob: {
-				controls.pots[SamplerKit::SamplePot] = val * 4095;
-			} break;
+		} else if (param_id == mapping.SampleKnob) {
+			controls.pots[SamplerKit::SamplePot] = val * 4095;
 
-			case Mapping::PlayButton: {
-				controls.play_button.sideload_set(val > 0.5f);
-			} break;
+		} else if (param_id == mapping.PlayButton) {
+			controls.play_button.sideload_set(val > 0.5f);
 
-			case Mapping::BankButton: {
-				controls.bank_button.sideload_set(val > 0.5f);
-			} break;
+		} else if (param_id == mapping.BankButton) {
+			controls.bank_button.sideload_set(val > 0.5f);
 
-			case Mapping::ReverseButton: {
-				controls.rev_button.sideload_set(val > 0.5f);
-			} break;
+		} else if (param_id == mapping.ReverseButton) {
+			controls.rev_button.sideload_set(val > 0.5f);
 
-			default:
-				return false; //not handled
-		}
+		} else
+			return false; //not handled
+
 		return true; //handled
 	}
 
@@ -76,80 +66,76 @@ public:
 			return std::clamp<int32_t>(std::round(cv * 819.f), 0, 4095);
 		};
 
-		switch (input_id) {
-			case Mapping::PlayTrigIn: {
-				controls.play_jack.register_state(volts > GateThreshold);
-			} break;
+		if (input_id == mapping.PlayTrigIn) {
+			controls.play_jack.register_state(volts > GateThreshold);
 
-			case Mapping::ReverseTrigIn: {
-				controls.rev_jack.register_state(volts > GateThreshold);
-			} break;
+		} else if (input_id == mapping.ReverseTrigIn) {
+			controls.rev_jack.register_state(volts > GateThreshold);
 
-			case Mapping::VOctIn: {
-				controls.cvs[SamplerKit::PitchCV] = bipolar_cv(volts);
-			} break;
+		} else if (input_id == mapping.VOctIn) {
+			controls.cvs[SamplerKit::PitchCV] = bipolar_cv(volts);
 
-			case Mapping::LengthCvIn: {
-				controls.pots[SamplerKit::LengthCV] = unipolar_cv(volts);
-			} break;
+		} else if (input_id == mapping.LengthCvIn) {
+			controls.pots[SamplerKit::LengthCV] = unipolar_cv(volts);
 
-			case Mapping::StartPosCvIn: {
-				controls.pots[SamplerKit::StartCV] = unipolar_cv(volts);
-			} break;
+		} else if (input_id == mapping.StartPosCvIn) {
+			controls.pots[SamplerKit::StartCV] = unipolar_cv(volts);
 
-			case Mapping::SampleCvIn: {
-				controls.pots[SamplerKit::SampleCV] = unipolar_cv(volts);
-			} break;
+		} else if (input_id == mapping.SampleCvIn) {
+			controls.pots[SamplerKit::SampleCV] = unipolar_cv(volts);
 
-			case Mapping::RecIn: {
-				//not used
-			} break;
+		} else if (input_id == mapping.RecIn) {
+			//not used
 
-			default:
-				return false; //not handled
-		}
+		} else
+			return false; //not handled
+
 		return true; //handled
 	}
 
 	float get_output(unsigned output_id) const {
-		if (output_id == Mapping::Out)
+		if (output_id == mapping.Out)
 			return out;
-		else if (output_id == Mapping::EndOut)
+
+		else if (output_id == mapping.EndOut)
 			return controls.end_out.sideload_get();
+
 		else
 			return 0;
 	}
 
 	std::optional<float> get_led_brightness(unsigned led_id) const {
-		switch (led_id) {
-			case Mapping::PlayLight:
-				return controls.playing_led.sideload_get();
+		if (led_id == mapping.PlayLight)
+			return controls.playing_led.sideload_get();
 
-			case Mapping::PlayButR:
-				return controls.play_led_data.r;
-			case Mapping::PlayButG:
-				return controls.play_led_data.g;
-			case Mapping::PlayButB:
-				return controls.play_led_data.b;
+		else if (led_id == mapping.PlayButR)
+			return controls.play_led_data.r;
+		else if (led_id == mapping.PlayButG)
+			return controls.play_led_data.g;
+		else if (led_id == mapping.PlayButB)
+			return controls.play_led_data.b;
 
-			case Mapping::BankButR:
-				return controls.bank_led_data.r;
-			case Mapping::BankButG:
-				return controls.bank_led_data.g;
-			case Mapping::BankButB:
-				return controls.bank_led_data.b;
+		else if (led_id == mapping.BankButR)
+			return controls.bank_led_data.r;
+		else if (led_id == mapping.BankButG)
+			return controls.bank_led_data.g;
+		else if (led_id == mapping.BankButB)
+			return controls.bank_led_data.b;
 
-			case Mapping::RevButR:
-				return controls.rev_led_data.r;
-			case Mapping::RevButG:
-				return controls.rev_led_data.g;
-			case Mapping::RevButB:
-				return controls.rev_led_data.b;
-		}
-		return std::nullopt;
+		else if (led_id == mapping.RevButR)
+			return controls.rev_led_data.r;
+		else if (led_id == mapping.RevButG)
+			return controls.rev_led_data.g;
+		else if (led_id == mapping.RevButB)
+			return controls.rev_led_data.b;
+
+		else
+			return std::nullopt;
 	}
 
 private:
+	STSChanMapping mapping;
+
 	float sample_rate = 48000;
 	SamplerKit::Controls controls;
 
