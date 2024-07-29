@@ -450,8 +450,7 @@ public:
 	}
 
 	void remove_module(uint16_t module_idx) {
-		// TODO: for all cache structures, if (module_id > deleted_module_idx) module_id -= 1;
-		// For testing, we just replace module with a blank and don't touch any indices
+		// For all cache structures, if (module_id > deleted_module_idx) module_id -= 1;
 
 		auto squash_module_id = [gap = module_idx](auto &module_id) {
 			if (module_id > gap && module_id != disconnected_jack.module_id)
@@ -529,6 +528,13 @@ public:
 		std::move(std::next(modules.begin(), module_idx + 1), modules.end(), std::next(modules.begin(), module_idx));
 
 		calc_multiple_module_indicies();
+
+		for (auto i = 0u; i < num_modules; i++) {
+			if (modules[i])
+				modules[i]->id = i;
+		}
+
+		//TODO: move async tasks to right core
 
 		smp.load_patch(num_modules);
 	}
