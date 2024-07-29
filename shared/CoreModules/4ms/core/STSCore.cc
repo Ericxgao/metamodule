@@ -1,7 +1,7 @@
 #include "CoreModules/CoreHelper.hh"
 #include "CoreModules/moduleFactory.hh"
-#include "channel_mapping.hh"
 #include "info/STS_info.hh"
+#include "sampler/channel_mapping.hh"
 #include "sampler/sampler_channel.hh"
 
 namespace MetaModule
@@ -121,8 +121,13 @@ public:
 	// clang-format on
 
 private:
-	SamplerChannel chanL{MappingL};
-	SamplerChannel chanR{MappingR};
+	SamplerKit::SampleList samples;
+	SamplerKit::BankManager banks{samples};
+	SamplerKit::UserSettings settings;
+	SamplerKit::CalibrationStorage cal_storage;
+
+	SamplerChannel chanL{MappingL, banks, settings, cal_storage};
+	SamplerChannel chanR{MappingR, banks, settings, cal_storage};
 };
 
 } // namespace MetaModule

@@ -35,7 +35,8 @@ struct BankManager {
 	uint8_t bank_status[MaxNumBanks];
 
 	BankManager(SampleList &samples)
-		: samples{samples} {}
+		: samples{samples} {
+	}
 
 	//?? These use samples:
 	SampleList &samples;

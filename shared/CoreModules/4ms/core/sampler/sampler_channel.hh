@@ -12,8 +12,14 @@ namespace MetaModule
 class SamplerChannel {
 
 public:
-	SamplerChannel(STSChanMapping mapping)
-		: mapping{mapping} {
+	SamplerChannel(STSChanMapping mapping,
+				   SamplerKit::BankManager &banks,
+				   SamplerKit::UserSettings &settings,
+				   SamplerKit::CalibrationStorage &cal_storage)
+		: mapping{mapping}
+		, params{controls, flags, settings, banks, cal_storage}
+		, banks{banks}
+		, settings{settings} {
 	}
 
 	void update() {
@@ -106,28 +112,28 @@ public:
 
 	std::optional<float> get_led_brightness(unsigned led_id) const {
 		if (led_id == mapping.PlayLight)
-			return controls.playing_led.sideload_get();
+			return controls.playing_led.sideload_get() ? 1.f : 0.f;
 
 		else if (led_id == mapping.PlayButR)
-			return controls.play_led_data.r;
+			return controls.play_led_data.r / 255.f;
 		else if (led_id == mapping.PlayButG)
-			return controls.play_led_data.g;
+			return controls.play_led_data.g / 255.f;
 		else if (led_id == mapping.PlayButB)
-			return controls.play_led_data.b;
+			return controls.play_led_data.b / 255.f;
 
 		else if (led_id == mapping.BankButR)
-			return controls.bank_led_data.r;
+			return controls.bank_led_data.r / 255.f;
 		else if (led_id == mapping.BankButG)
-			return controls.bank_led_data.g;
+			return controls.bank_led_data.g / 255.f;
 		else if (led_id == mapping.BankButB)
-			return controls.bank_led_data.b;
+			return controls.bank_led_data.b / 255.f;
 
 		else if (led_id == mapping.RevButR)
-			return controls.rev_led_data.r;
+			return controls.rev_led_data.r / 255.f;
 		else if (led_id == mapping.RevButG)
-			return controls.rev_led_data.g;
+			return controls.rev_led_data.g / 255.f;
 		else if (led_id == mapping.RevButB)
-			return controls.rev_led_data.b;
+			return controls.rev_led_data.b / 255.f;
 
 		else
 			return std::nullopt;
@@ -136,12 +142,19 @@ public:
 private:
 	STSChanMapping mapping;
 
-	float sample_rate = 48000;
 	SamplerKit::Controls controls;
+	SamplerKit::Params params;
+	SamplerKit::Flags flags;
+
+	// Do we need these? or just pass to params
+	SamplerKit::BankManager &banks;
+	SamplerKit::UserSettings &settings;
 
 	float out; //placeholder
 
 	static constexpr float GateThreshold = 1.0f;
+
+	float sample_rate = 48000;
 };
 
 } // namespace MetaModule

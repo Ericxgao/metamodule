@@ -43,8 +43,8 @@ target_sources(
 target_compile_definitions(
   4msLibrary
   PRIVATE
-    SAMPLE_RATE=48000
-    TEST
+  SAMPLE_RATE=48000
+  METAMODULE
 )
 
 target_include_directories(
@@ -117,6 +117,17 @@ target_include_directories(
   4msLibrary
   PRIVATE
     ${MM_ROOT}/shared/CoreModules/4ms/core/looping-delay/src
+)
+
+# Sampler
+target_sources(4msLibrary PRIVATE
+    ${MM_ROOT}/shared/CoreModules/4ms/core/sampler/mocks/calibration_storage.cc
+)
+target_include_directories(
+  4msLibrary
+  PRIVATE
+    ${MM_ROOT}/shared/CoreModules/4ms/core/sampler/src
+    ${MM_ROOT}/shared/CoreModules/4ms/core/sampler/mocks
 )
 
 # Axoloti ports

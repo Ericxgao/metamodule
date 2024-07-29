@@ -3,7 +3,7 @@
 #include "bank_blink.hh"
 #include "controls.hh"
 #include "flags.hh"
-#include "log.hh"
+// #include "log.hh"
 #include "palette.hh"
 #include "settings.hh"
 
@@ -15,7 +15,8 @@ struct Leds {
 
 	Leds(Flags &flags, Controls &controls)
 		: flags{flags}
-		, controls{controls} {}
+		, controls{controls} {
+	}
 
 	struct LedCriteria {
 		OperationMode op_mode;
@@ -33,7 +34,7 @@ struct Leds {
 
 	bool is_writing_index = false;
 
-	void update(LedCriteria state) {
+	void update(LedCriteria state, uint32_t cur_time) {
 		const OperationMode &op_mode = state.op_mode;
 		const PlayStates &play_state = state.play_state;
 		const RecStates &rec_state = state.rec_state;
@@ -82,7 +83,7 @@ struct Leds {
 				bank_color = last_bank_color;
 			}
 		} else {
-			bank_color = blink_bank(bank, HAL_GetTick()) ? BankColors[bank % 10] : Colors::off;
+			bank_color = blink_bank(bank, cur_time) ? BankColors[bank % 10] : Colors::off;
 		}
 
 		if (op_mode == OperationMode::SystemMode) {

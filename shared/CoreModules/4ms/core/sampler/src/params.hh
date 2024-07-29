@@ -118,7 +118,7 @@ struct Params {
 		update_cv_cal();
 #endif
 
-		leds.update({op_mode, play_state, rec_state, reverse, looping, display_bank, settings.stereo_mode});
+		leds.update({op_mode, play_state, rec_state, reverse, looping, display_bank, settings.stereo_mode}, time);
 	}
 
 	void startup_animation() {
