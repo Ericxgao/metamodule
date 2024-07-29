@@ -164,6 +164,8 @@ add_executable(
   #
   ${FWDIR}/src/vcv_hardware/random.cpp
   ${FWDIR}/src/vcv_hardware/gettimeofday.cc
+  ${FWDIR}/src/vcv_hardware/async_thread.cc
+
   #
   ${CMAKE_BINARY_DIR}/checkgit/git_version.cpp
 )

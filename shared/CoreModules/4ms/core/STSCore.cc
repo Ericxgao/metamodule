@@ -1,10 +1,13 @@
 #include "CoreModules/CoreHelper.hh"
+#include "CoreModules/async_thread.hh"
 #include "CoreModules/moduleFactory.hh"
 #include "info/STS_info.hh"
 #include "sampler/channel_mapping.hh"
 #include "sampler/sampler_channel.hh"
 #include "sampler/src/sts_filesystem.hh"
 #include "sdcard.hh"
+#include <chrono>
+#include <ctime>
 
 namespace MetaModule
 {
@@ -83,6 +86,18 @@ public:
 	STSCore() {
 		sd.reload();
 
+		// TODO: load index
+		// SamplerKit::SampleIndexLoader index_loader{sd, samples, banks, flags};
+		// index_loader.load_all_banks();
+
+		// Run this in the low-pri thread:
+		auto fs_thread = AsyncThread{id, [this]() {
+										 const auto start{std::chrono::steady_clock::now()};
+										 auto tm = start.time_since_epoch().count();
+										 chanL.fs_process(tm);
+										 chanR.fs_process(tm);
+										 // index_loader.handle_events();
+									 }};
 	}
 
 	void update() override {

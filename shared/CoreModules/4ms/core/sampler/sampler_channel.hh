@@ -36,6 +36,10 @@ public:
 		// sampler.start();
 	}
 
+	void fs_process(uint32_t tm) {
+		sampler.update_fs_thread(tm);
+	}
+
 	void update(float tm) {
 		// 	sampler.recorder.record_audio_to_buffer(inblock);
 		if (++out_buf_pos >= outblock.size()) {
