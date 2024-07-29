@@ -3,6 +3,7 @@
 #include "info/STS_info.hh"
 #include "sampler/channel_mapping.hh"
 #include "sampler/sampler_channel.hh"
+#include "sampler/src/sts_filesystem.hh"
 
 namespace MetaModule
 {
@@ -73,7 +74,10 @@ private:
 	};
 
 public:
-	STSCore() = default;
+	STSCore() {
+		SamplerKit::SampleIndexLoader index_loader{sd, samples, banks, flags};
+		index_loader.load_all_banks();
+	}
 
 	void update() override {
 		tm += ms_per_update;
