@@ -4,15 +4,15 @@
 #include "params.hh"
 #include "resample.hh"
 #include "sampler_calcs.hh"
+#include "sampler_state.hh"
+#include "util/cortex_math.hh"
 #include "util/zip.hh"
-
-#include "sampler_modes.hh"
 
 namespace SamplerKit
 {
 
 class SamplerAudio {
-	SamplerModes &sampler_modes;
+	SampleState &sample_state;
 	Params &params;
 	Flags &flags;
 	SampleList &samples;
@@ -24,16 +24,17 @@ public:
 	float env_level;
 	float env_rate = 0.f;
 
-	SamplerAudio(SamplerModes &sampler_modes,
+	SamplerAudio(SampleState &state,
 				 Params &params,
 				 Flags &flags,
 				 SampleList &samples,
 				 std::array<CircularBuffer, NumSamplesPerBank> &splay_buff)
-		: sampler_modes{sampler_modes}
+		: sample_state{state}
 		, params{params}
 		, flags{flags}
 		, samples{samples}
-		, play_buff{splay_buff} {}
+		, play_buff{splay_buff} {
+	}
 
 	void update(const AudioStreamConf::AudioInBlock &inblock, AudioStreamConf::AudioOutBlock &outblock) {
 		ChanBuff outL;
@@ -45,8 +46,8 @@ public:
 				auto c1 = in.sign_extend(in.chan[1]);
 				c0 *= Brain::AudioGain * 0.913f;
 				c1 *= Brain::AudioGain * 0.913f;
-				out.chan[0] = __SSAT(c0, 24);
-				out.chan[1] = __SSAT(c1, 24);
+				out.chan[0] = MathTools::signed_saturate(c0, 24);
+				out.chan[1] = MathTools::signed_saturate(c1, 24);
 			}
 			return;
 		}
@@ -62,8 +63,8 @@ public:
 				// Chan 1 L + Chan 2 L clipped at signed 16-bits
 				int32_t invL = -L;
 				int32_t invR = -R;
-				out.chan[1] = __SSAT(invL, 24);
-				out.chan[0] = __SSAT(invR, 24);
+				out.chan[1] = MathTools::signed_saturate(invL, 24);
+				out.chan[0] = MathTools::signed_saturate(invR, 24);
 			}
 			return;
 		}
@@ -74,8 +75,8 @@ public:
 			for (auto [out, L, R] : zip(outblock, outL, outR)) {
 				// Average is already done in play_audio_from_buffer(), and put into outL
 				int32_t invL = -L;
-				out.chan[1] = __SSAT(invL, 24);
-				out.chan[0] = __SSAT(L, 24);
+				out.chan[1] = MathTools::signed_saturate(invL, 24);
+				out.chan[0] = MathTools::signed_saturate(L, 24);
 			}
 		}
 	}
@@ -100,7 +101,7 @@ public:
 					   params.pitch :
 					   params.pitch * ((float)s_sample.sampleRate / (float)params.settings.record_sample_rate);
 
-		sampler_modes.check_sample_end();
+		sample_state.check_sample_end(params, samples, play_buff, flags);
 
 		bool flush = flags.read(Flag::PlayBuffDiscontinuity);
 		if (params.settings.stereo_mode) {
@@ -160,8 +161,8 @@ public:
 				amp = 0.f;
 			outL[i] = (float)outL[i] * amp * gain;
 			outR[i] = (float)outR[i] * amp * gain;
-			outL[i] = __SSAT(outL[i], 24);
-			outR[i] = __SSAT(outR[i], 24);
+			outL[i] = MathTools::signed_saturate(outL[i], 24);
+			outR[i] = MathTools::signed_saturate(outR[i], 24);
 		}
 		return amp;
 	}
@@ -170,8 +171,8 @@ public:
 		for (unsigned i = 0; i < outL.size(); i++) {
 			outL[i] = (float)outL[i] * gain;
 			outR[i] = (float)outR[i] * gain;
-			outL[i] = __SSAT(outL[i], 24);
-			outR[i] = __SSAT(outR[i], 24);
+			outL[i] = MathTools::signed_saturate(outL[i], 24);
+			outR[i] = MathTools::signed_saturate(outR[i], 24);
 		}
 	}
 
@@ -195,12 +196,12 @@ public:
 		// Update the play_time (used to calculate led flicker and END OUT pulse width
 		// ToDo: we should do this in update_params, so we can check if length or pitch changed
 		float sr = params.settings.record_sample_rate;
-		uint32_t anchor_pos = params.reverse ? sampler_modes.sample_file_endpos : sampler_modes.sample_file_startpos;
-		uint32_t ending_pos = calc_stop_point(length, rs, s_sample, anchor_pos, sampler_modes.anchor_cuenum, sr);
+		uint32_t anchor_pos = params.reverse ? sample_state.sample_file_endpos : sample_state.sample_file_startpos;
+		uint32_t ending_pos = calc_stop_point(length, rs, s_sample, anchor_pos, sample_state.anchor_cuenum, sr);
 		if (params.reverse)
-			sampler_modes.sample_file_startpos = ending_pos;
+			sample_state.sample_file_startpos = ending_pos;
 		else
-			sampler_modes.sample_file_endpos = ending_pos;
+			sample_state.sample_file_endpos = ending_pos;
 
 		const float fast_perc_fade_rate = calc_fast_perc_fade_rate(length, sr);
 
@@ -316,7 +317,7 @@ public:
 
 				// If the end point is the end of the sample data (which happens if the file is very short, or if we're
 				// at the end of it) Then pad it with silence so we keep a constant End Out period when looping
-				if (env_level <= 0.f && sampler_modes.sample_file_endpos == s_sample->inst_end)
+				if (env_level <= 0.f && sample_state.sample_file_endpos == s_sample->inst_end)
 					params.play_state = PlayStates::PAD_SILENCE;
 				else
 					check_perc_ending();

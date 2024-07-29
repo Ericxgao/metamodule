@@ -2,7 +2,7 @@
 #include "bank.hh"
 #include "circular_buffer.hh"
 #include "flags.hh"
-#include "log.hh"
+// #include "log.hh"
 #include "params.hh"
 #include "sampler_modes.hh"
 #include "sdcard.hh"
@@ -84,7 +84,7 @@ public:
 
 		// FixMe: Calculate play_buff_bufferedamt after play_buff changes, not here, then make bufferedmat private
 		// again
-		s.play_buff_bufferedamt[samplenum] = play_buff[samplenum].distance(params.reverse);
+		s.state.play_buff_bufferedamt[samplenum] = play_buff[samplenum].distance(params.reverse);
 
 		//
 		// Try to recover from a file read error
