@@ -22,7 +22,8 @@ public:
 		, settings{settings} {
 	}
 
-	void update() {
+	void update(float tm) {
+		params.update(uint32_t(tm));
 	}
 
 	void set_samplerate(float sr) {
@@ -30,7 +31,6 @@ public:
 		if (new_sample_rate != sample_rate) {
 			sample_rate = new_sample_rate;
 			controls.set_samplerate(sample_rate);
-			// sampler.set_samplerate(sampleRate);
 		}
 	}
 

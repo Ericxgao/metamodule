@@ -76,8 +76,9 @@ public:
 	STSCore() = default;
 
 	void update() override {
-		chanL.update();
-		chanR.update();
+		tm += ms_per_update;
+		chanL.update(tm);
+		chanR.update(tm);
 	}
 
 	void set_param(int param_id, float val) override {
@@ -101,6 +102,7 @@ public:
 	void set_samplerate(float sr) override {
 		chanL.set_samplerate(sr);
 		chanR.set_samplerate(sr);
+		ms_per_update = std::round(1000.f / sr);
 	}
 
 	float get_led_brightness(int led_id) const override {
@@ -128,6 +130,9 @@ private:
 
 	SamplerChannel chanL{MappingL, banks, settings, cal_storage};
 	SamplerChannel chanR{MappingR, banks, settings, cal_storage};
+
+	float tm = 0;
+	uint32_t ms_per_update = 1.f / 48.f;
 };
 
 } // namespace MetaModule
