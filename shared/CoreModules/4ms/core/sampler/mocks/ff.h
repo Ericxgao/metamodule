@@ -1,3 +1,4 @@
+#pragma once
 #include <cstdint>
 
 typedef unsigned int UINT;	/* int must be 16-bit or 32-bit */
@@ -37,3 +38,5 @@ struct FIL {
 struct DIR {
 	int id;
 };
+
+#define FF_MAX_LFN 80

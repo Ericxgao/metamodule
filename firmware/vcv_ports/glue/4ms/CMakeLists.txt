@@ -122,6 +122,7 @@ target_include_directories(
 # Sampler
 target_sources(4msLibrary PRIVATE
     ${MM_ROOT}/shared/CoreModules/4ms/core/sampler/mocks/calibration_storage.cc
+    ${MM_ROOT}/shared/CoreModules/4ms/core/sampler/src/bank.cc
 )
 target_include_directories(
   4msLibrary
