@@ -107,6 +107,8 @@ public:
 
 		// First module is the hub
 		modules[0] = ModuleFactory::create(PanelDef::typeID);
+		if (modules[0] != nullptr)
+			modules[0]->id = 0;
 
 		unsigned num_not_found = 0;
 		std::string not_found;
@@ -122,6 +124,7 @@ public:
 			} else {
 				pr_trace("Loaded module[%zu]: %s\n", i, pd.module_slugs[i].data());
 
+				modules[i]->id = i;
 				modules[i]->mark_all_inputs_unpatched();
 				modules[i]->mark_all_outputs_unpatched();
 				modules[i]->set_samplerate(samplerate);
