@@ -9,46 +9,65 @@ namespace MetaModule
 namespace //anonymous
 {
 constexpr int MAX_MODULES_IN_PATCH = 32;
-static std::array<Callback, MAX_MODULES_IN_PATCH> tasks;
-static std::array<bool, MAX_MODULES_IN_PATCH> task_enabled{};
 
-mdrivlib::Timekeeper async_task;
+struct Task {
+	Callback action;
+	bool enabled = false;
+};
+
+static std::array<Task, MAX_MODULES_IN_PATCH> tasks_core0;
+static std::array<Task, MAX_MODULES_IN_PATCH> tasks_core1;
+
+mdrivlib::Timekeeper async_task_core0;
+mdrivlib::Timekeeper async_task_core1;
 
 } // namespace
 
-AsyncThread::AsyncThread(unsigned id, Callback &&new_thread)
+AsyncThread::AsyncThread(unsigned id, Callback &&new_action)
 	: id{id} {
+
+	uint32_t current_core = ((__get_MPIDR() & 0xFF) == 1) ? 1 : 0; //0 = CA7 Core 1, 1 = CA7 Core 2
+	auto &tasks = current_core == 1 ? tasks_core1 : tasks_core0;
 	if (id < tasks.size()) {
-		tasks[id] = std::move(new_thread);
+		tasks[id].action = std::move(new_action);
 		__DMB();
-		task_enabled[id] = true;
+		tasks[id].enabled = true;
 	}
 }
 
 AsyncThread::~AsyncThread() {
+	uint32_t current_core = ((__get_MPIDR() & 0xFF) == 1) ? 1 : 0; //0 = CA7 Core 1, 1 = CA7 Core 2
+	auto &tasks = current_core == 1 ? tasks_core1 : tasks_core0;
 	if (id < tasks.size())
-		task_enabled[id] = false;
+		tasks[id].enabled = false;
 }
 
 void start_module_threads() {
+	uint32_t current_core = ((__get_MPIDR() & 0xFF) == 1) ? 1 : 0; //0 = CA7 Core 1, 1 = CA7 Core 2
+	auto &tasks = current_core == 1 ? tasks_core1 : tasks_core0;
+	auto &task_runner = current_core == 1 ? async_task_core1 : async_task_core0;
+
 	mdrivlib::TimekeeperConfig task_config{
-		.TIMx = TIM7,
+		.TIMx = current_core == 0 ? TIM7 : TIM6,
 		.period_ns = mdrivlib::TimekeeperConfig::Hz(2000),
 		.priority1 = 3,
 		.priority2 = 3,
 	};
 
-	async_task.init(task_config, []() {
-		for (auto [task, enabled] : zip(tasks, task_enabled)) {
-			if (!enabled)
+	task_runner.init(task_config, [&tasks]() {
+		for (auto &task : tasks) {
+			if (!task.enabled)
 				continue;
-			task();
+			task.action();
 		}
 	});
+	task_runner.start();
 }
 
 void pause_module_threads() {
-	async_task.stop();
+	uint32_t current_core = ((__get_MPIDR() & 0xFF) == 1) ? 1 : 0; //0 = CA7 Core 1, 1 = CA7 Core 2
+	auto &task_runner = current_core == 1 ? async_task_core1 : async_task_core0;
+	task_runner.stop();
 }
 
 } // namespace MetaModule

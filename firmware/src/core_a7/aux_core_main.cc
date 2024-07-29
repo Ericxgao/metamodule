@@ -1,3 +1,4 @@
+#include "CoreModules/async_thread.hh"
 #include "conf/hsem_conf.hh"
 #include "core_a7/a7_shared_memory.hh"
 #include "core_a7/smp_api.hh"
@@ -10,6 +11,7 @@
 #include "gui/ui.hh"
 #include "internal_plugin_manager.hh"
 #include "patch_play/patch_player.hh"
+#include "vcv_hardware/async_thread_control.hh"
 
 // Just to fix clangd:
 #include "helpers.hpp"
@@ -97,6 +99,8 @@ extern "C" void aux_core_main() {
 	// 	;
 
 	HAL_Delay(300); //allow time to load initial patch: TODO use semaphor
+
+	start_module_threads();
 
 	while (true) {
 		ui.update();
