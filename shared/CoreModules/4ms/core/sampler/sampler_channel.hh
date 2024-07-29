@@ -20,8 +20,7 @@ public:
 		: mapping{mapping}
 		, params{controls, flags, settings, banks, cal_storage}
 		, sampler{params, flags, sd, banks, play_buff} {
-		//align slots
-		const auto slot_size = (Brain::MemorySizeBytes / SamplerKit::NumSamplesPerBank) & 0xFFFFF000;
+		const auto slot_size = sizeof(memory[0]) & 0xFFFFF000;
 		for (unsigned i = 0; i < SamplerKit::NumSamplesPerBank; i++) {
 			play_buff[i].min = reinterpret_cast<uintptr_t>(&memory[i]);
 			play_buff[i].max = play_buff[i].min + slot_size;
@@ -184,7 +183,9 @@ private:
 	float sample_rate = 48000;
 
 	static constexpr uint32_t MemorySizeBytes = 5 * 1024 * 1024;
-	alignas(64) std::array<std::array<char, MemorySizeBytes / 10>, 10> memory;
+	alignas(64) std::array<std::array<char, MemorySizeBytes / SamplerKit::NumSamplesPerBank>,
+						   SamplerKit::NumSamplesPerBank> memory;
+
 	std::array<SamplerKit::CircularBuffer, SamplerKit::NumSamplesPerBank> play_buff;
 
 	AudioStreamConf::AudioInBlock inblock;

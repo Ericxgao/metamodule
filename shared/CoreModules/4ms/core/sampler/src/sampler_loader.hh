@@ -150,14 +150,14 @@ public:
 						// FixMe: Do we really want to set this in case of disk error? We don't when reversing.
 						g_error |= FILE_READ_FAIL_1;
 						s.is_buffered_to_file_end[samplenum] = 1;
-						printf_("Err Read\n");
+						printf("Err Read\n");
 					}
 
 					if (br < rd) {
 						// unexpected EOF, but we can continue writing out the data we read
 						g_error |= FILE_UNEXPECTEDEOF;
 						s.is_buffered_to_file_end[samplenum] = 1;
-						printf_("Err EOF\n");
+						printf("Err EOF\n");
 					}
 
 					s.sample_file_curpos[samplenum] = f_tell(&s.fil[samplenum]) - s_sample->startOfData;
