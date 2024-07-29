@@ -2,28 +2,47 @@
 #include "src/controls.hh"
 #include "src/flags.hh"
 #include "src/params.hh"
+#include "src/sampler.hh"
 #include <cmath>
 #include <optional>
 
 namespace MetaModule
 {
 
-// TODO: Compare mapping as an object vs. type
 class SamplerChannel {
 
 public:
 	SamplerChannel(STSChanMapping mapping,
+				   SamplerKit::Sdcard &sd,
 				   SamplerKit::BankManager &banks,
 				   SamplerKit::UserSettings &settings,
 				   SamplerKit::CalibrationStorage &cal_storage)
 		: mapping{mapping}
 		, params{controls, flags, settings, banks, cal_storage}
-		, banks{banks}
-		, settings{settings} {
+		, sampler{params, flags, sd, banks, play_buff} {
+		//align slots
+		const auto slot_size = (Brain::MemorySizeBytes / SamplerKit::NumSamplesPerBank) & 0xFFFFF000;
+		for (unsigned i = 0; i < SamplerKit::NumSamplesPerBank; i++) {
+			play_buff[i].min = reinterpret_cast<uintptr_t>(&memory[i]);
+			play_buff[i].max = play_buff[i].min + slot_size;
+			play_buff[i].size = slot_size;
+
+			play_buff[i].in = play_buff[i].min;
+			play_buff[i].out = play_buff[i].min;
+
+			play_buff[i].wrapping = 0;
+		}
+
+		// sampler.start();
 	}
 
 	void update(float tm) {
-		params.update(uint32_t(tm));
+		// 	sampler.recorder.record_audio_to_buffer(inblock);
+		if (++out_buf_pos >= outblock.size()) {
+			out_buf_pos = 0;
+			params.update(uint32_t(tm));
+			sampler.audio.update(inblock, outblock);
+		}
 	}
 
 	void set_samplerate(float sr) {
@@ -100,8 +119,11 @@ public:
 	}
 
 	float get_output(unsigned output_id) const {
-		if (output_id == mapping.Out)
-			return out;
+		if (output_id == mapping.OutL)
+			return outblock[out_buf_pos].chan[0];
+
+		else if (output_id == mapping.OutR)
+			return outblock[out_buf_pos].chan[1];
 
 		else if (output_id == mapping.EndOut)
 			return controls.end_out.sideload_get();
@@ -146,15 +168,23 @@ private:
 	SamplerKit::Params params;
 	SamplerKit::Flags flags;
 
-	// Do we need these? or just pass to params
-	SamplerKit::BankManager &banks;
-	SamplerKit::UserSettings &settings;
+	SamplerKit::Sampler sampler;
 
-	float out; //placeholder
+	// Do we need these? or just pass to params
+	// SamplerKit::Sdcard &sd;
+	// SamplerKit::BankManager &banks;
+	// SamplerKit::UserSettings &settings;
 
 	static constexpr float GateThreshold = 1.0f;
 
 	float sample_rate = 48000;
+
+	alignas(64) std::array<std::array<char, Brain::MemorySizeBytes / 10>, 10> memory;
+	std::array<SamplerKit::CircularBuffer, SamplerKit::NumSamplesPerBank> play_buff;
+
+	AudioStreamConf::AudioInBlock inblock;
+	AudioStreamConf::AudioOutBlock outblock;
+	uint32_t out_buf_pos = outblock.size() - 1;
 };
 
 } // namespace MetaModule

@@ -19,7 +19,8 @@ struct STSChanMapping {
 	uint8_t StartPosCvIn;
 	uint8_t SampleCvIn;
 	uint8_t RecIn;
-	uint8_t Out;
+	uint8_t OutL;
+	uint8_t OutR;
 	uint8_t EndOut;
 	uint8_t PlayLight;
 	uint8_t PlayButR;

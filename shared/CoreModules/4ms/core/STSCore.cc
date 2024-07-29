@@ -4,6 +4,7 @@
 #include "sampler/channel_mapping.hh"
 #include "sampler/sampler_channel.hh"
 #include "sampler/src/sts_filesystem.hh"
+#include "sdcard.hh"
 
 namespace MetaModule
 {
@@ -15,6 +16,9 @@ public:
 	using enum Info::Elem;
 
 private:
+	uint8_t OutL = CoreHelper<STSInfo>::output_index<OutLOut>();
+	uint8_t OutR = CoreHelper<STSInfo>::output_index<OutROut>();
+
 	STSChanMapping MappingL{
 		.PitchKnob = CoreHelper<STSInfo>::param_index<PitchLKnob>(),
 		.SampleKnob = CoreHelper<STSInfo>::param_index<SampleLKnob>(),
@@ -30,7 +34,8 @@ private:
 		.StartPosCvIn = CoreHelper<STSInfo>::input_index<StartPosCvLIn>(),
 		.SampleCvIn = CoreHelper<STSInfo>::input_index<SampleCvLIn>(),
 		.RecIn = CoreHelper<STSInfo>::input_index<LeftRecIn>(),
-		.Out = CoreHelper<STSInfo>::output_index<OutLOut>(),
+		.OutL = OutL,
+		.OutR = OutR,
 		.EndOut = CoreHelper<STSInfo>::output_index<EndOutLOut>(),
 		.PlayLight = CoreHelper<STSInfo>::first_light_index<PlayLLight>(),
 		.PlayButR = CoreHelper<STSInfo>::first_light_index<PlayLButton>() + 0,
@@ -59,7 +64,8 @@ private:
 		.StartPosCvIn = CoreHelper<STSInfo>::input_index<StartPosCvRIn>(),
 		.SampleCvIn = CoreHelper<STSInfo>::input_index<SampleCvRIn>(),
 		.RecIn = CoreHelper<STSInfo>::input_index<RightRecIn>(),
-		.Out = CoreHelper<STSInfo>::output_index<OutROut>(),
+		.OutL = OutL,
+		.OutR = OutR,
 		.EndOut = CoreHelper<STSInfo>::output_index<EndOutROut>(),
 		.PlayLight = CoreHelper<STSInfo>::first_light_index<PlayRLight>(),
 		.PlayButR = CoreHelper<STSInfo>::first_light_index<PlayRButton>() + 0,
@@ -75,8 +81,8 @@ private:
 
 public:
 	STSCore() {
-		SamplerKit::SampleIndexLoader index_loader{sd, samples, banks, flags};
-		index_loader.load_all_banks();
+		sd.reload();
+
 	}
 
 	void update() override {
@@ -100,6 +106,18 @@ public:
 	}
 
 	float get_output(int output_id) const override {
+		if (output_id == OutL) {
+			return chanL.get_output(OutL).value_or(0) + chanR.get_output(OutL).value_or(0);
+
+		} else if (output_id == OutR) {
+			return chanL.get_output(OutR).value_or(0) + chanR.get_output(OutR).value_or(0);
+
+		} else if (auto found = chanL.get_output(output_id); found.has_value()) {
+			return *found;
+
+		} else if (auto found = chanR.get_output(output_id); found.has_value()) {
+			return *found;
+		}
 		return 0.f;
 	}
 
@@ -127,6 +145,7 @@ public:
 	// clang-format on
 
 private:
+	SamplerKit::Sdcard sd;
 	SamplerKit::SampleList samples;
 	SamplerKit::BankManager banks{samples};
 	SamplerKit::UserSettings settings;
