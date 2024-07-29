@@ -118,7 +118,7 @@ public:
 		return true; //handled
 	}
 
-	float get_output(unsigned output_id) const {
+	std::optional<float> get_output(unsigned output_id) const {
 		if (output_id == mapping.OutL)
 			return outblock[out_buf_pos].chan[0];
 
@@ -179,7 +179,8 @@ private:
 
 	float sample_rate = 48000;
 
-	alignas(64) std::array<std::array<char, Brain::MemorySizeBytes / 10>, 10> memory;
+	static constexpr uint32_t MemorySizeBytes = 5 * 1024 * 1024;
+	alignas(64) std::array<std::array<char, MemorySizeBytes / 10>, 10> memory;
 	std::array<SamplerKit::CircularBuffer, SamplerKit::NumSamplesPerBank> play_buff;
 
 	AudioStreamConf::AudioInBlock inblock;

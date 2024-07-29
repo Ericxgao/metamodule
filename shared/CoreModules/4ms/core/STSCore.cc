@@ -151,8 +151,8 @@ private:
 	SamplerKit::UserSettings settings;
 	SamplerKit::CalibrationStorage cal_storage;
 
-	SamplerChannel chanL{MappingL, banks, settings, cal_storage};
-	SamplerChannel chanR{MappingR, banks, settings, cal_storage};
+	SamplerChannel chanL{MappingL, sd, banks, settings, cal_storage};
+	SamplerChannel chanR{MappingR, sd, banks, settings, cal_storage};
 
 	float tm = 0;
 	uint32_t ms_per_update = 1.f / 48.f;
