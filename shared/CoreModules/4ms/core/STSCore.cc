@@ -4,10 +4,9 @@
 #include "info/STS_info.hh"
 #include "sampler/channel_mapping.hh"
 #include "sampler/sampler_channel.hh"
-#include "sampler/src/sts_filesystem.hh"
+// #include "sampler/src/sts_filesystem.hh"
 #include "sdcard.hh"
-#include <chrono>
-#include <ctime>
+#include "time.hh"
 
 namespace MetaModule
 {
@@ -92,10 +91,9 @@ public:
 
 		// Run this in the low-pri thread:
 		auto fs_thread = AsyncThread{id, [this]() {
-										 const auto start{std::chrono::steady_clock::now()};
-										 auto tm = start.time_since_epoch().count();
-										 chanL.fs_process(tm);
-										 chanR.fs_process(tm);
+										 auto time_ms = SamplerKit::get_time();
+										 chanL.fs_process(time_ms);
+										 chanR.fs_process(time_ms);
 										 // index_loader.handle_events();
 									 }};
 	}
