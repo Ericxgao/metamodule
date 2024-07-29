@@ -12,6 +12,8 @@ constexpr int MAX_MODULES_IN_PATCH = 32;
 static std::array<Callback, MAX_MODULES_IN_PATCH> tasks;
 static std::array<bool, MAX_MODULES_IN_PATCH> task_enabled{};
 
+mdrivlib::Timekeeper async_task;
+
 } // namespace
 
 AsyncThread::AsyncThread(unsigned id, Callback &&new_thread)
@@ -29,14 +31,24 @@ AsyncThread::~AsyncThread() {
 }
 
 void start_module_threads() {
-	for (auto [task, enabled] : zip(tasks, task_enabled)) {
-		if (!enabled)
-			continue;
-		task();
-	}
+	mdrivlib::TimekeeperConfig task_config{
+		.TIMx = TIM7,
+		.period_ns = mdrivlib::TimekeeperConfig::Hz(2000),
+		.priority1 = 3,
+		.priority2 = 3,
+	};
+
+	async_task.init(task_config, []() {
+		for (auto [task, enabled] : zip(tasks, task_enabled)) {
+			if (!enabled)
+				continue;
+			task();
+		}
+	});
 }
 
 void pause_module_threads() {
+	async_task.stop();
 }
 
 } // namespace MetaModule
