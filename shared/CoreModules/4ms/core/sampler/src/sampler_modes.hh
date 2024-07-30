@@ -1,10 +1,10 @@
 #pragma once
+#include "CoreModules/fs_access.hh"
 #include "bank.hh"
 #include "cache.hh"
 #include "circular_buffer.hh"
 #include "errors.hh"
 #include "flags.hh"
-#include "fs_access.hh"
 #include "params.hh"
 #include "sampler_calcs.hh"
 #include "sampler_state.hh"

@@ -1,6 +1,6 @@
 #pragma once
+#include "CoreModules/fs_access.hh"
 #include "elements.hh"
-#include "fs_access.hh"
 #include <string_view>
 
 namespace SamplerKit
@@ -29,8 +29,8 @@ struct Sdcard {
 	//
 	uint32_t chan_clmt[10][256];
 
-	MetaModule::FRESULT create_linkmap(MetaModule::FIL *fil, uint8_t samplenum) {
-		MetaModule::FRESULT res = MetaModule::FR_OK;
+	FRESULT create_linkmap(FIL *fil, uint8_t samplenum) {
+		FRESULT res = FR_OK;
 
 		fil->cltbl = chan_clmt[samplenum];
 		chan_clmt[samplenum][0] = 256;
@@ -40,17 +40,17 @@ struct Sdcard {
 	}
 
 	// Create the sys dir if not existing already
-	MetaModule::FRESULT check_sys_dir() {
-		MetaModule::FRESULT res;
-		MetaModule::DIR dir;
+	FRESULT check_sys_dir() {
+		FRESULT res;
+		DIR dir;
 
 		res = MetaModule::f_opendir(&dir, SYS_DIR.data());
 
-		if (res != MetaModule::FR_OK) {
-			return MetaModule::FR_INT_ERR; // fail
+		if (res != FR_OK) {
+			return FR_INT_ERR; // fail
 		}
 
-		return MetaModule::FR_OK;
+		return FR_OK;
 	}
 
 	// Returns the next directory in the parent_dir
@@ -60,7 +60,7 @@ struct Sdcard {
 	// the string path of the next directory in the parent_dir will be returned.
 	// If no more directories exist, it will return 0
 	//
-	MetaModule::FRESULT get_next_dir(MetaModule::DIR *dir, const char *parent_path, char *next_dir_path) {
+	FRESULT get_next_dir(DIR *dir, const char *parent_path, char *next_dir_path) {
 		// FRESULT res = FR_OK;
 		// FILINFO fno;
 		// uint8_t i;
@@ -90,10 +90,10 @@ struct Sdcard {
 		// 	}
 		// 	return FR_NO_FILE;
 		// }
-		return MetaModule::FR_NO_PATH;
+		return FR_NO_PATH;
 	}
 
-	uint8_t find_next_ext_in_dir(MetaModule::DIR *dir, const char *ext, char *fname) {
+	uint8_t find_next_ext_in_dir(DIR *dir, const char *ext, char *fname) {
 		// FRESULT res;
 		// FILINFO fno;
 		// uint32_t i;
@@ -220,7 +220,7 @@ struct Sdcard {
 		// // Return next filename, in alphabetical order
 		// str_cpy(fname, firstf_name);	  // use first filename found alphabetically
 		// used_from_folder[firstf_num] = 1; // mark file as found
-		return MetaModule::FR_OK;
+		return FR_OK;
 	}
 };
 

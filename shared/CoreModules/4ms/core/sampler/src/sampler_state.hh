@@ -26,7 +26,7 @@ struct SampleState {
 
 	bool cached_rev_state[NumSamplesPerBank];
 
-	MetaModule::FIL fil[NumSamplesPerBank];
+	FIL fil[NumSamplesPerBank];
 	Cache cache[NumSamplesPerBank];
 
 	void check_sample_end(Params &params,
