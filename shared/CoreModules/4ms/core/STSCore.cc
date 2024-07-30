@@ -96,9 +96,20 @@ private:
 	// 	}
 	// }};
 
+	void update_fs_thread() {
+		DebugPin1High();
+		if (tm - last_tm > 1.0f) {
+			last_tm = tm;
+			// chanL.fs_process(tm);
+			// chanR.fs_process(tm);
+			// index_loader.handle_events();
+		}
+		DebugPin1Low();
+	}
+
 public:
 	STSCore() {
-		sd.reload();
+		// sd.reload();
 
 		// TODO: load index
 		// SamplerKit::SampleIndexLoader index_loader{sd, samples, banks, flags};
@@ -106,25 +117,17 @@ public:
 	}
 
 	void update() override {
+		DebugPin0High();
 		tm += ms_per_update;
 		chanL.update(tm);
 		chanR.update(tm);
+		DebugPin0Low();
 
 		if (!started_fs_thread) {
-			started_fs_thread = true;
 			fs_thread.start(id, {[this]() {
-								// Run this in the low-pri thread:
-								if (tm - last_tm > 1.0f) {
-									DebugPin0High();
-									DebugPin2High();
-									last_tm = tm;
-									chanL.fs_process(tm);
-									chanR.fs_process(tm);
-									DebugPin0Low();
-									DebugPin2Low();
-									// index_loader.handle_events();
-								}
+								update_fs_thread();
 							}});
+			started_fs_thread = true;
 		}
 	}
 
@@ -182,6 +185,8 @@ public:
 	// clang-format on
 
 private:
+	bool started_fs_thread = false;
+
 	SamplerKit::Sdcard sd;
 	SamplerKit::SampleList samples;
 	SamplerKit::BankManager banks{samples};
@@ -194,8 +199,6 @@ private:
 	float tm = 0;
 	float last_tm = 0;
 	float ms_per_update = 1000.f / 48000.f;
-
-	bool started_fs_thread = false;
 };
 
 } // namespace MetaModule
