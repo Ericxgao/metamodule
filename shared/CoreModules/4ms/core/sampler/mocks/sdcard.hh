@@ -7,8 +7,8 @@ namespace SamplerKit
 {
 
 struct Sdcard {
-	std::string_view SYS_DIR = "_STS.system";
-	std::string_view SYS_DIR_SLASH = "_STS.system/";
+	constexpr static std::string_view SYS_DIR = "_STS.system";
+	constexpr static std::string_view SYS_DIR_SLASH = "_STS.system/";
 
 	enum INIT_FIND_ALPHA_ACTIONS { FIND_ALPHA_DONT_INIT, FIND_ALPHA_INIT_FOLDER };
 	enum { INVALID_FILENAME = 0xFE, NO_MORE_AVAILABLE_FILES = 0xFF };

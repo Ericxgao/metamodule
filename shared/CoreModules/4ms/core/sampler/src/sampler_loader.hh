@@ -93,7 +93,7 @@ public:
 			res = sd.create_linkmap(&s.fil[samplenum], samplenum);
 			if (res != FR_OK) {
 				g_error |= FILE_CANNOT_CREATE_CLTBL;
-				f_close(&s.fil[samplenum]);
+				MetaModule::f_close(&s.fil[samplenum]);
 				params.play_state = PlayStates::SILENT;
 				return;
 			}
@@ -144,7 +144,7 @@ public:
 					if (rd > READ_BLOCK_SIZE)
 						rd = READ_BLOCK_SIZE;
 
-					res = f_read(&s.fil[samplenum], file_read_buffer, rd, &br);
+					res = MetaModule::f_read(&s.fil[samplenum], file_read_buffer, rd, &br);
 
 					if (res != FR_OK) {
 						// FixMe: Do we really want to set this in case of disk error? We don't when reversing.
@@ -207,7 +207,7 @@ public:
 						g_error |= FILE_UNEXPECTEDEOF;
 
 					// Jump backwards to where we started reading
-					res = f_lseek(&s.fil[samplenum], t_fptr);
+					res = MetaModule::f_lseek(&s.fil[samplenum], t_fptr);
 					if (res != FR_OK)
 						g_error |= FILE_SEEK_FAIL;
 					if (MetaModule::f_tell(&s.fil[samplenum]) != t_fptr)

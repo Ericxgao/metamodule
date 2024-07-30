@@ -1,5 +1,5 @@
 #pragma once
-#include "ff.h"
+#include "CoreModules/fs_access.hh"
 #include "sample_type.hh"
 #include <cstdint>
 

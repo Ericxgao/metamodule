@@ -14,11 +14,11 @@ static uint32_t read(FIL *file, void *data, uint32_t bytes_to_read, unsigned int
 	FRESULT res = f_read(file, data, bytes_to_read, bytes_read);
 
 	if (res != FR_OK) {
-		f_close(file);
+		MetaModule::f_close(file);
 		return HEADER_READ_FAIL;
 	}
 	if (bytes_to_read < *bytes_read) {
-		f_close(file);
+		MetaModule::f_close(file);
 		// printf_("Read %d bytes, requested %d\n", *bytes_read, bytes_to_read);
 		return FILE_WAVEFORMATERR;
 	}
@@ -41,7 +41,7 @@ uint32_t load_sample_header(Sample *s_sample, FIL *sample_file) {
 		return err;
 
 	if (!is_valid_wav_header(sample_header)) {
-		f_close(sample_file);
+		MetaModule::f_close(sample_file);
 		return FILE_WAVEFORMATERR;
 	}
 
@@ -59,15 +59,15 @@ uint32_t load_sample_header(Sample *s_sample, FIL *sample_file) {
 		if (chunk_hdr.chunkSize & 0b1)
 			chunk_hdr.chunkSize++;
 
-		next_chunk_start = f_tell(sample_file) + chunk_hdr.chunkSize;
+		next_chunk_start = MetaModule::f_tell(sample_file) + chunk_hdr.chunkSize;
 		// fast-forward to the next chunk
 		if (chunk_hdr.chunkId != ccFMT)
-			f_lseek(sample_file, next_chunk_start);
+			MetaModule::f_lseek(sample_file, next_chunk_start);
 	}
 
 	// Go back to beginning of chunk --probably could do this more elegantly by removing fmtID and fmtSize from
 	// WaveFmtChunk and just reading the next bit of data
-	f_lseek(sample_file, f_tell(sample_file) - sizeof(WaveChunkHeader));
+	MetaModule::f_lseek(sample_file, MetaModule::f_tell(sample_file) - sizeof(WaveChunkHeader));
 
 	// Re-read the whole chunk (or at least the fields we need) since it's a WaveFmtChunk
 	rd = sizeof(WaveFmtChunk);
@@ -76,7 +76,7 @@ uint32_t load_sample_header(Sample *s_sample, FIL *sample_file) {
 
 	if (!is_valid_format_chunk(fmt_chunk)) {
 		// printf_("Invalid format chunk: %x %x %x\n", fmt_chunk.byteRate, fmt_chunk.audioFormat, fmt_chunk.sampleRate);
-		f_close(sample_file);
+		MetaModule::f_close(sample_file);
 		return FILE_WAVEFORMATERR;
 	}
 
@@ -88,7 +88,7 @@ uint32_t load_sample_header(Sample *s_sample, FIL *sample_file) {
 	s_sample->PCM = (fmt_chunk.audioFormat == 0xFFFE) ? 3 : fmt_chunk.audioFormat;
 
 	// Skip to the next chunk
-	f_lseek(sample_file, next_chunk_start);
+	MetaModule::f_lseek(sample_file, next_chunk_start);
 
 	// Look for the data and cue chunks
 	chunk_hdr.chunkId = 0;
@@ -101,7 +101,7 @@ uint32_t load_sample_header(Sample *s_sample, FIL *sample_file) {
 		if (auto err = read(sample_file, &chunk_hdr, rd, &br); err)
 			return err;
 
-		next_chunk_start = f_tell(sample_file) + chunk_hdr.chunkSize;
+		next_chunk_start = MetaModule::f_tell(sample_file) + chunk_hdr.chunkSize;
 
 		// Fix an odd-sized chunk, it should always be even
 		if (chunk_hdr.chunkSize & 0b1) {
@@ -112,17 +112,17 @@ uint32_t load_sample_header(Sample *s_sample, FIL *sample_file) {
 		if (chunk_hdr.chunkId == ccDATA) {
 			// check valid data chunk size
 			if (chunk_hdr.chunkSize == 0) {
-				f_close(sample_file);
+				MetaModule::f_close(sample_file);
 				return FR_INT_ERR;
 			}
 
 			// Check the file is really as long as the data chunkSize says it is
-			if (f_size(sample_file) < (f_tell(sample_file) + chunk_hdr.chunkSize)) {
-				chunk_hdr.chunkSize = f_size(sample_file) - f_tell(sample_file);
+			if (MetaModule::f_size(sample_file) < (MetaModule::f_tell(sample_file) + chunk_hdr.chunkSize)) {
+				chunk_hdr.chunkSize = MetaModule::f_size(sample_file) - MetaModule::f_tell(sample_file);
 			}
 
 			s_sample->sampleSize = chunk_hdr.chunkSize;
-			s_sample->startOfData = f_tell(sample_file);
+			s_sample->startOfData = MetaModule::f_tell(sample_file);
 			s_sample->file_status = FileStatus::Found;
 			s_sample->inst_end = s_sample->sampleSize;
 			s_sample->inst_size = s_sample->sampleSize;
@@ -167,11 +167,11 @@ uint32_t load_sample_header(Sample *s_sample, FIL *sample_file) {
 		}
 
 		// stop if this is the last chunk
-		if ((next_chunk_start + sizeof(WaveChunkHeader)) >= f_size(sample_file))
+		if ((next_chunk_start + sizeof(WaveChunkHeader)) >= MetaModule::f_size(sample_file))
 			break;
 
 		// keeping scanning chunks
-		f_lseek(sample_file, next_chunk_start);
+		MetaModule::f_lseek(sample_file, next_chunk_start);
 	}
 
 	if (!found_data_chunk)
