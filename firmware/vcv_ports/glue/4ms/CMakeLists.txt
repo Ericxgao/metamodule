@@ -23,6 +23,7 @@ if (NOT DEFINED alpaca)
 endif()
 
 target_link_libraries(4msLibrary PRIVATE cpputil ryml alpaca::alpaca)
+target_link_libraries(4msLibrary PRIVATE FatFs)
 
 target_include_directories(
   4msLibrary
