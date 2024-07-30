@@ -6,10 +6,16 @@ namespace MetaModule
 
 class AsyncThread {
 public:
-	AsyncThread(unsigned id, Callback &&new_thread);
+	AsyncThread(Callback &&action);
+	AsyncThread();
+
+	void start(unsigned module_id);
+	void start(unsigned module_id, Callback &&action);
+
 	~AsyncThread();
 
 private:
+	Callback action;
 	unsigned id;
 };
 
