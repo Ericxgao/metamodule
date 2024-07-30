@@ -1,5 +1,6 @@
 #pragma once
 #include "dynload/plugin_file_list.hh"
+#include "ff.h"
 #include "fs/volumes.hh"
 #include "patch_file/patch_dir_list.hh"
 #include "util/static_string.hh"
@@ -87,8 +88,10 @@ struct IntercoreStorageMessage {
 
 	uint32_t fatfs_req_id;
 	enum FatFsOp : uint8_t { open, close, read, seek, opendir, closedir, readdir, stat } fatfs_op;
-	void *objptr;
+	FIL *fil;
+	DIR *dir;
 	uint8_t mode;
+	uint64_t file_offset;
 };
 
 constexpr static auto IntercoreStorageMessageSize = sizeof(IntercoreStorageMessage);
