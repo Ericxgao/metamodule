@@ -87,15 +87,9 @@ FRESULT f_getcwd(char *buff, uint32_t len) {
 	return FR_INT_ERR;
 }
 
-// FRESULT f_getfree(const TCHAR *path, DWORD *nclst, FATFS **fatfs); /* Get number of free clusters on the drive */
-// FRESULT f_getlabel(const TCHAR *path, TCHAR *label, DWORD *vsn);   /* Get volume label */
-// FRESULT f_setlabel(const TCHAR *label);							   /* Set volume label */
-// FRESULT f_forward(FIL *fp, UINT (*func)(const uint8_t *, UINT), UINT btf, UINT *bf); /* Forward data to the stream */
-// FRESULT f_expand(FIL *fp, FSIZE_t fsz, uint8_t opt);		 /* Allocate a contiguous block to the file */
-// FRESULT f_mount(FATFS *fs, const TCHAR *path, uint8_t opt); /* Mount/Unmount a logical drive */
-// FRESULT f_mkfs (const TCHAR* path, const MKFS_PARM* opt, void* work, UINT len);	/* Create a FAT volume */
-// FRESULT f_fdisk(uint8_t pdrv, const LBA_t ptbl[], void *work); /* Divide a physical drive into some partitions */
-// FRESULT f_setcp(WORD cp);					  /* Set current code page */
+FRESULT f_expand(FIL *fp, FSIZE_t fsz, uint8_t opt) {
+	return FR_INT_ERR;
+}
 
 int f_putc(TCHAR c, FIL *fp) {
 	return FR_INT_ERR;
@@ -110,39 +104,17 @@ int f_printf(FIL *fp, const TCHAR *str, ...) {
 }
 
 char *f_gets(char *buff, int len, FIL *fp) {
-	return buff;
+	return nullptr;
 }
 
-#ifndef f_eof
-#define f_eof(fp) ((int)((fp)->fptr == (fp)->obj.objsize))
-#endif
+// FRESULT f_getfree(const TCHAR *path, DWORD *nclst, FATFS **fatfs); /* Get number of free clusters on the drive */
+// FRESULT f_getlabel(const TCHAR *path, TCHAR *label, DWORD *vsn);   /* Get volume label */
+// FRESULT f_setlabel(const TCHAR *label);							   /* Set volume label */
+// FRESULT f_mount(FATFS *fs, const TCHAR *path, uint8_t opt); /* Mount/Unmount a logical drive */
+// FRESULT f_mkfs (const TCHAR* path, const MKFS_PARM* opt, void* work, UINT len);	/* Create a FAT volume */
+// FRESULT f_fdisk(uint8_t pdrv, const LBA_t ptbl[], void *work); /* Divide a physical drive into some partitions */
+// FRESULT f_setcp(WORD cp);					  /* Set current code page */
 
-#ifndef f_error
-#define f_error(fp) ((fp)->err)
-#endif
-
-#ifndef f_tell
-#define f_tell(fp) ((fp)->fptr)
-#endif
-
-#ifndef f_size
-#define f_size(fp) ((fp)->obj.objsize)
-#endif
-
-#ifndef f_rewind
-#define f_rewind(fp) f_lseek((fp), 0)
-#endif
-
-#ifndef f_rewinddir
-#define f_rewinddir(dp) f_readdir((dp), 0)
-#endif
-
-#ifndef f_rmdir
-#define f_rmdir(path) f_unlink(path)
-#endif
-
-#ifndef f_unmount
-#define f_unmount(path) f_mount(0, path, 0)
-#endif
+// FRESULT f_forward(FIL *fp, UINT (*func)(const uint8_t *, UINT), UINT btf, UINT *bf); /* Forward data to the stream */
 
 } // namespace MetaModule

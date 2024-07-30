@@ -204,8 +204,8 @@ public:
 			}
 
 			// Check the file is really as long as the sampleSize says it is
-			if (f_size(&state.fil[samplenum]) < (s_sample->startOfData + s_sample->sampleSize)) {
-				s_sample->sampleSize = f_size(&state.fil[samplenum]) - s_sample->startOfData;
+			if (MetaModule::f_size(&state.fil[samplenum]) < (s_sample->startOfData + s_sample->sampleSize)) {
+				s_sample->sampleSize = MetaModule::f_size(&state.fil[samplenum]) - s_sample->startOfData;
 
 				if (s_sample->inst_end > s_sample->sampleSize)
 					s_sample->inst_end = s_sample->sampleSize;
@@ -294,7 +294,7 @@ public:
 			}
 			if (g_error & LSEEK_FPTR_MISMATCH) {
 				state.sample_file_startpos =
-					align_addr(f_tell(&state.fil[samplenum]) - s_sample->startOfData, s_sample->blockAlign);
+					align_addr(MetaModule::f_tell(&state.fil[samplenum]) - s_sample->startOfData, s_sample->blockAlign);
 			}
 
 			state.cache[samplenum].low = state.sample_file_startpos;
