@@ -31,8 +31,6 @@ public:
 
 			play_buff[i].wrapping = 0;
 		}
-
-		// sampler.start();
 	}
 
 	void fs_process(uint32_t tm) {
@@ -40,10 +38,10 @@ public:
 	}
 
 	void update(float tm) {
-		// 	sampler.recorder.record_audio_to_buffer(inblock);
 		if (++out_buf_pos >= outblock.size()) {
 			out_buf_pos = 0;
 			params.update(uint32_t(tm));
+			// 	sampler.recorder.record_audio_to_buffer(inblock);
 			sampler.audio.update(inblock, outblock);
 		}
 	}

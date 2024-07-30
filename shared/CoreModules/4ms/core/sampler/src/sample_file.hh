@@ -42,8 +42,8 @@ using SampleList = std::array<Bank, MaxNumBanks>;
 constexpr auto SampleSize = sizeof(Sample);
 constexpr auto SampleListSize = sizeof(SampleList);
 
-FRESULT reload_sample_file(FIL *fil, Sample *s_sample, Sdcard &sd);
-FRESULT create_dir(Sdcard &sd, DIR *dir, const char *dir_name);
-FRESULT new_filename(uint8_t bank_idx, uint8_t sample_num, char *path, Sdcard &sd, Bank &bank);
+MetaModule::FRESULT reload_sample_file(MetaModule::FIL *fil, Sample *s_sample, Sdcard &sd);
+MetaModule::FRESULT create_dir(Sdcard &sd, MetaModule::DIR *dir, const char *dir_name);
+MetaModule::FRESULT new_filename(uint8_t bank_idx, uint8_t sample_num, char *path, Sdcard &sd, Bank &bank);
 
 } // namespace SamplerKit

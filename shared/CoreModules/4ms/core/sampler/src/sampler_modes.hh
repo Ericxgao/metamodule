@@ -4,6 +4,7 @@
 #include "circular_buffer.hh"
 #include "errors.hh"
 #include "flags.hh"
+#include "fs_access.hh"
 #include "params.hh"
 #include "sampler_calcs.hh"
 #include "sampler_state.hh"

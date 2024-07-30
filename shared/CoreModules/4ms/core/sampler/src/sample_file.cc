@@ -28,7 +28,7 @@
 #include "sample_file.hh"
 #include "bank_util.hh"
 #include "errors.hh"
-#include "ff.h"
+#include "fs_access.hh"
 #include "sdcard.hh"
 #include "str_util.h"
 #include "sts_filesystem.hh"
@@ -43,26 +43,26 @@ namespace SamplerKit
 
 FRESULT create_dir(Sdcard &sd, DIR *dir, const char *dir_name) {
 
-	FRESULT res;
+	FRESULT res = FR_NOT_ENABLED;
 
-	// Open the temp directory
-	res = f_opendir(dir, dir_name);
+	// // Open the temp directory
+	// res = f_opendir(dir, dir_name);
 
-	// If it doesn't exist, create it
-	if (res == FR_NO_PATH)
-		res = f_mkdir(dir_name);
+	// // If it doesn't exist, create it
+	// if (res == FR_NO_PATH)
+	// 	res = f_mkdir(dir_name);
 
-	// If we got an error opening or creating a dir
-	// try reloading the SDCard, then opening the dir (and creating if needed)
-	if (res == FR_OK)
-		return FR_OK;
+	// // If we got an error opening or creating a dir
+	// // try reloading the SDCard, then opening the dir (and creating if needed)
+	// if (res == FR_OK)
+	// 	return FR_OK;
 
-	if (!sd.reload_disk())
-		return FR_DISK_ERR;
+	// if (!sd.reload_disk())
+	// 	return FR_DISK_ERR;
 
-	res = f_opendir(dir, dir_name);
-	if (res == FR_NO_PATH)
-		res = f_mkdir(dir_name);
+	// res = f_opendir(dir, dir_name);
+	// if (res == FR_NO_PATH)
+	// 	res = f_mkdir(dir_name);
 	return res;
 }
 
