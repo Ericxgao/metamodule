@@ -1,120 +1,121 @@
 #include "CoreModules/fs_access.hh"
+#include <string_view>
 
 namespace MetaModule
 {
 
-FRESULT f_open(FIL *fp, const char *path, uint8_t mode) {
+FS::FS(std::string_view root)
+	: root{root} {
+}
+
+FRESULT FS::f_open(FIL *fp, const char *path, uint8_t mode) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_close(FIL *fp) {
+FRESULT FS::f_close(FIL *fp) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_read(FIL *fp, void *buff, unsigned btr, unsigned *br) {
+FRESULT FS::f_read(FIL *fp, void *buff, unsigned btr, unsigned *br) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_write(FIL *fp, const void *buff, UINT btw, UINT *bw) {
+FRESULT FS::f_write(FIL *fp, const void *buff, UINT btw, UINT *bw) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_lseek(FIL *fp, uint64_t ofs) {
+FRESULT FS::f_lseek(FIL *fp, uint64_t ofs) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_truncate(FIL *fp) {
+FRESULT FS::f_truncate(FIL *fp) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_sync(FIL *fp) {
+FRESULT FS::f_sync(FIL *fp) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_opendir(DIR *dp, const char *path) {
+FRESULT FS::f_opendir(DIR *dp, const char *path) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_closedir(DIR *dp) {
+FRESULT FS::f_closedir(DIR *dp) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_readdir(DIR *dp, FILINFO *fno) {
+FRESULT FS::f_readdir(DIR *dp, FILINFO *fno) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_findfirst(DIR *dp, FILINFO *fno, const TCHAR *path, const TCHAR *pattern) {
+FRESULT FS::f_findfirst(DIR *dp, FILINFO *fno, const TCHAR *path, const TCHAR *pattern) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_findnext(DIR *dp, FILINFO *fno) {
+FRESULT FS::f_findnext(DIR *dp, FILINFO *fno) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_mkdir(const TCHAR *path) {
+FRESULT FS::f_mkdir(const TCHAR *path) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_unlink(const TCHAR *path) {
+FRESULT FS::f_unlink(const TCHAR *path) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_rename(const TCHAR *path_old, const TCHAR *path_new) {
+FRESULT FS::f_rename(const TCHAR *path_old, const TCHAR *path_new) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_stat(const char *path, FILINFO *fno) {
+FRESULT FS::f_stat(const char *path, FILINFO *fno) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_chmod(const TCHAR *path, uint8_t attr, uint8_t mask) {
+FRESULT FS::f_chmod(const TCHAR *path, uint8_t attr, uint8_t mask) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_utime(const TCHAR *path, const FILINFO *fno) {
+FRESULT FS::f_utime(const TCHAR *path, const FILINFO *fno) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_chdir(const TCHAR *path) {
+FRESULT FS::f_chdir(const TCHAR *path) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_chdrive(const TCHAR *path) {
+FRESULT FS::f_getcwd(char *buff, uint32_t len) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_getcwd(char *buff, uint32_t len) {
+FRESULT FS::f_expand(FIL *fp, FSIZE_t fsz, uint8_t opt) {
 	return FR_INT_ERR;
 }
 
-FRESULT f_expand(FIL *fp, FSIZE_t fsz, uint8_t opt) {
+int FS::f_putc(TCHAR c, FIL *fp) {
 	return FR_INT_ERR;
 }
 
-int f_putc(TCHAR c, FIL *fp) {
+int FS::f_puts(const TCHAR *str, FIL *cp) {
 	return FR_INT_ERR;
 }
 
-int f_puts(const TCHAR *str, FIL *cp) {
+int FS::f_printf(FIL *fp, const TCHAR *str, ...) {
 	return FR_INT_ERR;
 }
 
-int f_printf(FIL *fp, const TCHAR *str, ...) {
-	return FR_INT_ERR;
-}
-
-char *f_gets(char *buff, int len, FIL *fp) {
+char *FS::f_gets(char *buff, int len, FIL *fp) {
 	return nullptr;
 }
 
-// FRESULT f_getfree(const TCHAR *path, DWORD *nclst, FATFS **fatfs); /* Get number of free clusters on the drive */
-// FRESULT f_getlabel(const TCHAR *path, TCHAR *label, DWORD *vsn);   /* Get volume label */
-// FRESULT f_setlabel(const TCHAR *label);							   /* Set volume label */
-// FRESULT f_mount(FATFS *fs, const TCHAR *path, uint8_t opt); /* Mount/Unmount a logical drive */
-// FRESULT f_mkfs (const TCHAR* path, const MKFS_PARM* opt, void* work, UINT len);	/* Create a FAT volume */
-// FRESULT f_fdisk(uint8_t pdrv, const LBA_t ptbl[], void *work); /* Divide a physical drive into some partitions */
-// FRESULT f_setcp(WORD cp);					  /* Set current code page */
-
-// FRESULT f_forward(FIL *fp, UINT (*func)(const uint8_t *, UINT), UINT btf, UINT *bf); /* Forward data to the stream */
+//FRESULT FS::f_chdrive(const TCHAR *path);
+// FRESULT FS::f_getfree(const TCHAR *path, DWORD *nclst, FATFS **fatfs); /* Get number of free clusters on the drive */
+// FRESULT FS::f_getlabel(const TCHAR *path, TCHAR *label, DWORD *vsn);   /* Get volume label */
+// FRESULT FS::f_setlabel(const TCHAR *label);							   /* Set volume label */
+// FRESULT FS::f_mount(FATFS *fs, const TCHAR *path, uint8_t opt); /* Mount/Unmount a logical drive */
+// FRESULT FS::f_mkfs (const TCHAR* path, const MKFS_PARM* opt, void* work, UINT len);	/* Create a FAT volume */
+// FRESULT FS::f_fdisk(uint8_t pdrv, const LBA_t ptbl[], void *work); /* Divide a physical drive into some partitions */
+// FRESULT FS::f_setcp(WORD cp);					  /* Set current code page */
+// FRESULT FS::f_forward(FIL *fp, UINT (*func)(const uint8_t *, UINT), UINT btf, UINT *bf); /* Forward data to the stream */
 
 } // namespace MetaModule
