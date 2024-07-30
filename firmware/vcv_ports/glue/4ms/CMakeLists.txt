@@ -31,6 +31,11 @@ target_include_directories(
 		 ${MM_ROOT}/shared/patch_convert/ryml #For ryml_serial
 )
 
+target_include_directories(4msLibrary
+    PUBLIC ${MM_ROOT}/firmware/lib/fatfs/source 
+           ${MM_ROOT}/firmware/src/fs/fatfs
+)
+
 # Ensemble Oscillator
 target_sources(
   4msLibrary
