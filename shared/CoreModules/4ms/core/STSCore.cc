@@ -1,11 +1,11 @@
+#include "../firmware/src/medium/debug_raw.h"
 #include "CoreModules/CoreHelper.hh"
 #include "CoreModules/async_thread.hh"
 #include "CoreModules/moduleFactory.hh"
 #include "info/STS_info.hh"
 #include "sampler/channel_mapping.hh"
 #include "sampler/sampler_channel.hh"
-// #include "sampler/src/sts_filesystem.hh"
-#include "../firmware/src/medium/debug_raw.h"
+#include "sampler/src/sts_filesystem.hh"
 #include "sdcard.hh"
 
 namespace MetaModule
@@ -34,8 +34,9 @@ public:
 	STSCore() {
 		// sd.reload();
 		// TODO: load index
-		// SamplerKit::SampleIndexLoader index_loader{sd, samples, banks, flags};
-		// index_loader.load_all_banks();
+		SamplerKit::Flags flags;
+		SamplerKit::SampleIndexLoader index_loader{sd, samples, banks, flags};
+		index_loader.load_all_banks();
 	}
 
 	void update() override {
@@ -105,7 +106,7 @@ public:
 	// clang-format on
 
 private:
-	SamplerKit::Sdcard sd;
+	SamplerKit::Sdcard sd{"4msCompany/samples/"};
 	SamplerKit::SampleList samples;
 	SamplerKit::BankManager banks{samples};
 	SamplerKit::UserSettings settings;

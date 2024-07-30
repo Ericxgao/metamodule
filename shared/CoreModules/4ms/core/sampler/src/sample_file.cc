@@ -46,11 +46,11 @@ FRESULT create_dir(Sdcard &sd, DIR *dir, const char *dir_name) {
 	FRESULT res = FR_NOT_ENABLED;
 
 	// // Open the temp directory
-	// res = MetaModule::f_opendir(dir, dir_name);
+	// res = sd.f_opendir(dir, dir_name);
 
 	// // If it doesn't exist, create it
 	// if (res == FR_NO_PATH)
-	// 	res = MetaModule::f_mkdir(dir_name);
+	// 	res = sd.f_mkdir(dir_name);
 
 	// // If we got an error opening or creating a dir
 	// // try reloading the SDCard, then opening the dir (and creating if needed)
@@ -60,9 +60,9 @@ FRESULT create_dir(Sdcard &sd, DIR *dir, const char *dir_name) {
 	// if (!sd.reload_disk())
 	// 	return FR_DISK_ERR;
 
-	// res = MetaModule::f_opendir(dir, dir_name);
+	// res = sd.f_opendir(dir, dir_name);
 	// if (res == FR_NO_PATH)
-	// 	res = MetaModule::f_mkdir(dir_name);
+	// 	res = sd.f_mkdir(dir_name);
 	return res;
 }
 
@@ -70,8 +70,8 @@ FRESULT reload_sample_file(FIL *fil, Sample *s_sample, Sdcard &sd) {
 	FRESULT res;
 
 	// Try closing and re-opening file
-	MetaModule::f_close(fil);
-	res = MetaModule::f_open(fil, s_sample->filename, FA_READ);
+	sd.f_close(fil);
+	res = sd.f_open(fil, s_sample->filename, FA_READ);
 
 	return res;
 }
@@ -141,7 +141,7 @@ FRESULT new_filename(uint8_t bank_idx, uint8_t sample_num, char *path, Sdcard &s
 
 	res = create_dir(sd, &dir, path);
 	if (res == FR_OK)
-		res = MetaModule::f_opendir(&dir, path);
+		res = sd.f_opendir(&dir, path);
 
 	if (res != FR_OK)
 		return FR_INT_ERR; // fail
@@ -171,7 +171,7 @@ FRESULT new_filename(uint8_t bank_idx, uint8_t sample_num, char *path, Sdcard &s
 		uint8_t findres = sd.find_next_ext_in_dir(&dir, WAV_EXT, filename);
 
 		if (findres != FR_OK && findres != 0xFF) {
-			MetaModule::f_closedir(&dir);
+			sd.f_closedir(&dir);
 
 			// filesystem error reading directory,
 			// Just use a timestamp to be safe
@@ -195,7 +195,7 @@ FRESULT new_filename(uint8_t bank_idx, uint8_t sample_num, char *path, Sdcard &s
 		if (findres == 0xFF) {
 			// no more .wav files found
 			// exit the while loop
-			MetaModule::f_closedir(&dir);
+			sd.f_closedir(&dir);
 			break;
 		}
 		if (filename[0]) {

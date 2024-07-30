@@ -1,6 +1,6 @@
 #pragma once
+#include "log.hh"
 #include <cstdint>
-#include <cstdio>
 
 enum g_Errors {
 	READ_BUFF1_OVERRUN = (1 << 0),
@@ -41,5 +41,5 @@ enum g_Errors {
 
 static inline void check_errors(uint32_t err) {
 	if (err)
-		printf("STS Error: %x\n", (unsigned)err);
+		pr_err("STS Error: %x\n", (unsigned)err);
 }

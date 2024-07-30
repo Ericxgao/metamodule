@@ -27,11 +27,11 @@
  */
 
 #include "sts_sampleindex.hh"
-#include "CoreModules/fs_access.hh"
 #include "bank_util.hh"
 #include "elements.hh"
 #include "log.hh"
 #include "sample_header.hh"
+#include "sdcard.hh"
 #include "str_util.h"
 
 namespace SamplerKit
@@ -105,20 +105,20 @@ FRESULT SampleIndex::write_sampleindex_file() {
 	// }
 
 	// (re)create sample.index file and its pointer &temp_file
-	res = MetaModule::f_open(&temp_file, path, FA_WRITE | FA_CREATE_ALWAYS);
+	res = sd.f_open(&temp_file, path, FA_WRITE | FA_CREATE_ALWAYS);
 	if (res != FR_OK)
 		return res;
 
 	// write firmware version
-	MetaModule::f_printf(&temp_file, "Firmware Version: %d.%d\n\n", FirmwareMajorVersion, FirmwareMinorVersion);
+	sd.f_printf(&temp_file, "Firmware Version: %d.%d\n\n", FirmwareMajorVersion, FirmwareMinorVersion);
 
 	// write banks/sample to index file
 	for (i = 0; i < MaxNumBanks; i++) // For each bank
 	{
 		// Print bank Color to index file
 		bank_to_color(i, b_color);
-		MetaModule::f_printf(&temp_file, "--------------------\n%s\n--------------------\n", b_color);
-		// MetaModule::f_sync(&temp_file);
+		sd.f_printf(&temp_file, "--------------------\n%s\n--------------------\n", b_color);
+		// sd.f_sync(&temp_file);
 
 		for (j = 0; j < NumSamplesPerBank; j++) // For each sample in bank
 		{
@@ -134,63 +134,63 @@ FRESULT SampleIndex::write_sampleindex_file() {
 				// Print bank path to index file
 				if (j == 0) {
 					str_cpy(bank_path, path);
-					MetaModule::f_printf(&temp_file, "path: %s\n\n", path);
-					// MetaModule::f_sync(&temp_file);
+					sd.f_printf(&temp_file, "path: %s\n\n", path);
+					// sd.f_sync(&temp_file);
 				}
 
 				// Print sample name to index file
 				if (str_cmp(path, bank_path))
-					MetaModule::f_printf(&temp_file, "%s\n", filename_ptr);
+					sd.f_printf(&temp_file, "%s\n", filename_ptr);
 				else
-					MetaModule::f_printf(&temp_file, "%s\n", samples[i][j].filename);
-				// MetaModule::f_sync(&temp_file);
+					sd.f_printf(&temp_file, "%s\n", samples[i][j].filename);
+				// sd.f_sync(&temp_file);
 
 				// write sample header info to index file
 				switch (samples[i][j].numChannels) {
 					case 1:
-						MetaModule::f_printf(&temp_file,
-											 "sample info: %dHz, %d-bit, mono,   %d samples\n",
-											 samples[i][j].sampleRate,
-											 samples[i][j].sampleByteSize * 8,
-											 samples[i][j].sampleSize);
-						// MetaModule::f_sync(&temp_file);
+						sd.f_printf(&temp_file,
+									"sample info: %dHz, %d-bit, mono,   %d samples\n",
+									samples[i][j].sampleRate,
+									samples[i][j].sampleByteSize * 8,
+									samples[i][j].sampleSize);
+						// sd.f_sync(&temp_file);
 						break;
 					case 2:
-						MetaModule::f_printf(&temp_file,
-											 "sample info: %dHz, %d-bit, stereo, %d samples\n",
-											 samples[i][j].sampleRate,
-											 samples[i][j].sampleByteSize * 8,
-											 samples[i][j].sampleSize);
-						// MetaModule::f_sync(&temp_file);
+						sd.f_printf(&temp_file,
+									"sample info: %dHz, %d-bit, stereo, %d samples\n",
+									samples[i][j].sampleRate,
+									samples[i][j].sampleByteSize * 8,
+									samples[i][j].sampleSize);
+						// sd.f_sync(&temp_file);
 						break;
 				}
 
 				// write play data to index file
-				MetaModule::f_printf(&temp_file,
-									 "%s: %d\n%s: %d\n%s: %d\n%s(%%): %d\n\n",
-									 PLAYDATTAG_SLOT,
-									 j + 1,
-									 PLAYDATTAG_START,
-									 samples[i][j].inst_start,
-									 PLAYDATTAG_SIZE,
-									 samples[i][j].inst_size,
-									 PLAYDATTAG_GAIN,
-									 (int)(100 * samples[i][j].inst_gain));
-				// MetaModule::f_sync(&temp_file);
+				sd.f_printf(&temp_file,
+							"%s: %d\n%s: %d\n%s: %d\n%s(%%): %d\n\n",
+							PLAYDATTAG_SLOT,
+							j + 1,
+							PLAYDATTAG_START,
+							samples[i][j].inst_start,
+							PLAYDATTAG_SIZE,
+							samples[i][j].inst_size,
+							PLAYDATTAG_GAIN,
+							(int)(100 * samples[i][j].inst_gain));
+				// sd.f_sync(&temp_file);
 			}
 		}
-		MetaModule::f_printf(&temp_file, "\n");
-		// MetaModule::f_sync(&temp_file);
+		sd.f_printf(&temp_file, "\n");
+		// sd.f_sync(&temp_file);
 	}
 
 	// Write global info to file
-	MetaModule::f_printf(&temp_file, "Timestamp: %d\n", get_fattime()); // timestamp
-	MetaModule::f_printf(&temp_file, EOF_TAG);							// end of file tag
-	MetaModule::f_printf(&temp_file, "\n"); // text editors report an error if file does not end in newline
+	sd.f_printf(&temp_file, "Timestamp: %d\n", get_fattime()); // timestamp
+	sd.f_printf(&temp_file, EOF_TAG);						   // end of file tag
+	sd.f_printf(&temp_file, "\n"); // text editors report an error if file does not end in newline
 
 	// CLOSE INDEX FILE
-	MetaModule::f_sync(&temp_file);
-	MetaModule::f_close(&temp_file);
+	sd.f_sync(&temp_file);
+	sd.f_close(&temp_file);
 	return FR_OK;
 }
 
@@ -206,20 +206,20 @@ FRESULT SampleIndex::write_samplelist(void) {
 	char b_color[11]; // Lavender-5\0
 
 	// create file
-	res = MetaModule::f_open(&temp_file, SAMPLELIST_FILE, FA_WRITE | FA_CREATE_ALWAYS);
+	res = sd.f_open(&temp_file, SAMPLELIST_FILE, FA_WRITE | FA_CREATE_ALWAYS);
 	if (res != FR_OK)
 		return res;
 
-	MetaModule::f_sync(&temp_file);
+	sd.f_sync(&temp_file);
 
 	// WRITE 'SAMPLES' INFO TO SAMPLE LIST
-	MetaModule::f_printf(&temp_file,
-						 "<!DOCTYPE html>\n<html>\n\
+	sd.f_printf(&temp_file,
+				"<!DOCTYPE html>\n<html>\n\
 <head>\n<style type=\"text/css\">\n@media print\n{\n   div{page-break-inside: avoid;}\n   body {font-size:7pt;}\n   h2 {font-size:11pt;}\n   h1 {font-size:13pt;}\n}\n</style>\n</head>\n\
 <body style=\"padding-left: 100px; background-color:#F8F9FD;\">\n<br>Firmware Version: %d.%d<br>\n<h1>SAMPLE LIST</h1><br>\n",
-						 FirmwareMajorVersion,
-						 FirmwareMinorVersion);
-	MetaModule::f_sync(&temp_file);
+				FirmwareMajorVersion,
+				FirmwareMinorVersion);
+	sd.f_sync(&temp_file);
 
 	// For each bank
 	for (i = 0; i < MaxNumBanks; i++) {
@@ -241,11 +241,11 @@ FRESULT SampleIndex::write_samplelist(void) {
 			// Print bank name to file
 			bank_to_color(i, b_color);
 			if (i > 0) {
-				MetaModule::f_printf(&temp_file, "<br>\n");
-				MetaModule::f_sync(&temp_file);
+				sd.f_printf(&temp_file, "<br>\n");
+				sd.f_sync(&temp_file);
 			}
-			MetaModule::f_printf(&temp_file, "\n<div>\n<h2>%s</h2>\n<table>\n", b_color);
-			MetaModule::f_sync(&temp_file);
+			sd.f_printf(&temp_file, "\n<div>\n<h2>%s</h2>\n<table>\n", b_color);
+			sd.f_sync(&temp_file);
 
 			// Print sample name to sample list, for each sample in bank
 			for (j = 0; j < NumSamplesPerBank; j++) {
@@ -255,27 +255,27 @@ FRESULT SampleIndex::write_samplelist(void) {
 				if (!minutes && !seconds)
 					seconds = 1;
 				if (samples[i][j].filename[0] != 0)
-					MetaModule::f_printf(&temp_file,
-										 "<tr>\n<td>%d]  %s</td>\n<td>........... [%02d:%02d]</td>\n</tr>\n",
-										 j + 1,
-										 samples[i][j].filename,
-										 minutes,
-										 seconds);
+					sd.f_printf(&temp_file,
+								"<tr>\n<td>%d]  %s</td>\n<td>........... [%02d:%02d]</td>\n</tr>\n",
+								j + 1,
+								samples[i][j].filename,
+								minutes,
+								seconds);
 				else
-					MetaModule::f_printf(
+					sd.f_printf(
 						&temp_file, "<tr>\n<td>%d]&nbsp;&nbsp;(empty slot)</td>\n<td>&nbsp;</td>\n</tr>\n", j + 1);
-				MetaModule::f_sync(&temp_file);
+				sd.f_sync(&temp_file);
 			}
 
-			MetaModule::f_printf(&temp_file, "</table><br>\n</div>\n");
-			MetaModule::f_sync(&temp_file);
+			sd.f_printf(&temp_file, "</table><br>\n</div>\n");
+			sd.f_sync(&temp_file);
 		}
 	}
-	MetaModule::f_printf(&temp_file, "</body>\n</html>");
-	MetaModule::f_sync(&temp_file);
+	sd.f_printf(&temp_file, "</body>\n</html>");
+	sd.f_sync(&temp_file);
 
 	// CLOSE FILE
-	MetaModule::f_close(&temp_file);
+	sd.f_close(&temp_file);
 	return FR_OK;
 }
 
@@ -293,39 +293,39 @@ FRESULT SampleIndex::backup_sampleindex_file(void) {
 
 	// Open index
 	str_cat(idx_full_path, Sdcard::SYS_DIR_SLASH.data(), SAMPLE_INDEX_FILE);
-	res_index = MetaModule::f_open(&indexfile, idx_full_path, FA_READ);
+	res_index = sd.f_open(&indexfile, idx_full_path, FA_READ);
 	if (res_index != FR_OK) {
-		MetaModule::f_close(&indexfile);
+		sd.f_close(&indexfile);
 		return res_index;
 	}
 
 	// Open Backup file
 	str_cat(bak_full_path, Sdcard::SYS_DIR_SLASH.data(), SAMPLE_BAK_FILE);
-	res_bak = MetaModule::f_open(&backupindex, bak_full_path, FA_WRITE | FA_CREATE_ALWAYS);
+	res_bak = sd.f_open(&backupindex, bak_full_path, FA_WRITE | FA_CREATE_ALWAYS);
 	if (res_bak != FR_OK) {
-		MetaModule::f_close(&indexfile);
-		MetaModule::f_close(&backupindex);
+		sd.f_close(&indexfile);
+		sd.f_close(&backupindex);
 		return res_bak;
 	}
 
 	while (1) {
 		// Read index file
-		MetaModule::f_read(&indexfile, read_buff, 512, &bytes_read);
+		sd.f_read(&indexfile, read_buff, 512, &bytes_read);
 
 		// Write into backup file
-		MetaModule::f_write(&backupindex, read_buff, bytes_read, &bytes_written);
-		MetaModule::f_sync(&backupindex);
+		sd.f_write(&backupindex, read_buff, bytes_read, &bytes_written);
+		sd.f_sync(&backupindex);
 
 		if (bytes_written != bytes_read) // error
 		{
-			MetaModule::f_close(&indexfile);
-			MetaModule::f_close(&backupindex);
+			sd.f_close(&indexfile);
+			sd.f_close(&backupindex);
 			return FR_INT_ERR; // ToDo: there should be a way to report this error more accurately
 		}
 
-		if (MetaModule::f_eof(&indexfile)) {
-			MetaModule::f_close(&indexfile);
-			MetaModule::f_close(&backupindex);
+		if (f_eof(&indexfile)) {
+			sd.f_close(&indexfile);
+			sd.f_close(&backupindex);
 			return FR_OK;
 		}
 	}
@@ -342,7 +342,7 @@ bool SampleIndex::check_sampleindex_valid(const char *indexfilename) {
 	UINT br;
 
 	str_cat(full_path, Sdcard::SYS_DIR_SLASH.data(), SAMPLE_INDEX_FILE);
-	res = MetaModule::f_open(&temp_file, full_path, FA_READ);
+	res = sd.f_open(&temp_file, full_path, FA_READ);
 
 	if (res != FR_OK) {
 		return false;
@@ -351,32 +351,32 @@ bool SampleIndex::check_sampleindex_valid(const char *indexfilename) {
 	// Verify it's a complete file, with EOF_TAG at the end
 	l = str_len(EOF_TAG) + EOF_PAD;
 
-	res = MetaModule::f_lseek(&temp_file, MetaModule::f_size(&temp_file) - l);
+	res = sd.f_lseek(&temp_file, f_size(&temp_file) - l);
 	if (res != FR_OK) {
-		MetaModule::f_close(&temp_file);
+		sd.f_close(&temp_file);
 		return false;
 	} // can't seek to end: file/disk error
 
-	res = MetaModule::f_read(&temp_file, readdata, l, &br);
+	res = sd.f_read(&temp_file, readdata, l, &br);
 	if (res != FR_OK) {
-		MetaModule::f_close(&temp_file);
+		sd.f_close(&temp_file);
 		return false;
 	} // can't read from file: file/disk error
 
 	if (br != l) {
-		MetaModule::f_close(&temp_file);
+		sd.f_close(&temp_file);
 		return false;
 	} // didn't read proper number of bytes: disk/read error
 
 	// Check for EOF_TAG within last read buffer
 	readdata[br] = '\0';
 	if (!str_found(readdata, EOF_TAG)) {
-		MetaModule::f_close(&temp_file);
+		sd.f_close(&temp_file);
 		return false;
 	} // no EOF_TAG found at end of file: index is incomplete
 
 	// Index file is ok
-	MetaModule::f_close(&temp_file);
+	sd.f_close(&temp_file);
 	return true;
 }
 
@@ -423,7 +423,7 @@ FRESULT SampleIndex::load_sampleindex_file(SampleIndex::IndexSelection use_backu
 		str_cat(full_path, Sdcard::SYS_DIR_SLASH.data(), SAMPLE_INDEX_FILE);
 	}
 
-	res = MetaModule::f_open(&temp_file, full_path, FA_READ);
+	res = sd.f_open(&temp_file, full_path, FA_READ);
 	if (res != FR_OK) {
 		pr_dbg("Index file not found: %.255s\n", full_path);
 		return FR_NO_FILE; // file not found
@@ -434,9 +434,9 @@ FRESULT SampleIndex::load_sampleindex_file(SampleIndex::IndexSelection use_backu
 
 	uint32_t dot_cnt = 0;
 	// Read File
-	while (!MetaModule::f_eof(&temp_file)) // until we reach the eof
+	while (!f_eof(&temp_file)) // until we reach the eof
 	{
-		MetaModule::f_gets(read_buffer, FF_MAX_LFN + 1, &temp_file); // Read next line
+		sd.f_gets(read_buffer, FF_MAX_LFN + 1, &temp_file); // Read next line
 		pr_log(".");
 		if (dot_cnt++ > 60) {
 			flags.set(Flag::StartupParsing);
@@ -553,7 +553,7 @@ FRESULT SampleIndex::load_sampleindex_file(SampleIndex::IndexSelection use_backu
 							if (str_pos('/', file_name) != 0xFFFFFFFF) {
 								str_cpy(full_path, file_name);
 								// DEBUG0_ON;
-								res = MetaModule::f_open(&temp_wav_file, full_path, FA_READ);
+								res = sd.f_open(&temp_wav_file, full_path, FA_READ);
 								// DEBUG0_OFF;
 							}
 							if (res != FR_OK) // if file wasn't found
@@ -566,9 +566,9 @@ FRESULT SampleIndex::load_sampleindex_file(SampleIndex::IndexSelection use_backu
 								}
 								str_cat(full_path, folder_path, file_name);
 								// DEBUG0_ON;
-								res = MetaModule::f_open(
-									&temp_wav_file, full_path, FA_READ); // try to open folder_path/file_name
-																		 //  DEBUG0_OFF;
+								res =
+									sd.f_open(&temp_wav_file, full_path, FA_READ); // try to open folder_path/file_name
+																				   //  DEBUG0_OFF;
 							}
 							if (res == FR_OK) // file found
 							{
@@ -578,8 +578,8 @@ FRESULT SampleIndex::load_sampleindex_file(SampleIndex::IndexSelection use_backu
 									str_cpy(samples[cur_bank][cur_sample].filename,
 											full_path);		  // open file_name (not read_buffer)
 									sample_was_loaded = true; // At least a sample was loaded
-									head_load = load_sample_header(&samples[cur_bank][cur_sample], &temp_wav_file);
-									MetaModule::f_close(&temp_wav_file); // close wav file
+									head_load = load_sample_header(&samples[cur_bank][cur_sample], &temp_wav_file, sd);
+									sd.f_close(&temp_wav_file); // close wav file
 									if (head_load != FR_OK) {
 										load_data = 0;
 										read_name = 1;
@@ -593,7 +593,7 @@ FRESULT SampleIndex::load_sampleindex_file(SampleIndex::IndexSelection use_backu
 										load_data = PLAY_START;
 									} // othewise set file as found and move on to next play data
 								} else {
-									MetaModule::f_close(&temp_wav_file);
+									sd.f_close(&temp_wav_file);
 									load_data = 0;
 									read_name = 1;
 									break;
@@ -608,7 +608,7 @@ FRESULT SampleIndex::load_sampleindex_file(SampleIndex::IndexSelection use_backu
 									samples[cur_bank][cur_sample].file_status =
 										FileStatus::NotFound; // Mark file as not found
 								} else {
-									MetaModule::f_close(&temp_wav_file);
+									sd.f_close(&temp_wav_file);
 									load_data = 0;
 									read_name = 1;
 									break;
@@ -705,7 +705,7 @@ FRESULT SampleIndex::load_sampleindex_file(SampleIndex::IndexSelection use_backu
 						if (str_pos('/', file_name) != 0xFFFFFFFF) {
 							str_cpy(full_path, file_name);
 							// DEBUG1_ON;
-							res = MetaModule::f_open(&temp_wav_file, full_path, FA_READ);
+							res = sd.f_open(&temp_wav_file, full_path, FA_READ);
 							// DEBUG1_OFF;
 						}
 						if (res != FR_OK) {
@@ -719,7 +719,7 @@ FRESULT SampleIndex::load_sampleindex_file(SampleIndex::IndexSelection use_backu
 							// try to open folder_path/file_name
 							str_cat(full_path, folder_path, file_name);
 							// DEBUG1_ON;
-							res = MetaModule::f_open(&temp_wav_file, full_path, FA_READ);
+							res = sd.f_open(&temp_wav_file, full_path, FA_READ);
 							// DEBUG1_OFF;
 						}
 
@@ -731,10 +731,10 @@ FRESULT SampleIndex::load_sampleindex_file(SampleIndex::IndexSelection use_backu
 										full_path); // use whatever file_name was opened
 								samples[cur_bank][cur_sample].file_status = FileStatus::Found;
 								sample_was_loaded = true; // At least a sample was loaded
-								head_load = load_sample_header(&samples[cur_bank][cur_sample], &temp_wav_file);
-								MetaModule::f_close(&temp_wav_file);
+								head_load = load_sample_header(&samples[cur_bank][cur_sample], &temp_wav_file, sd);
+								sd.f_close(&temp_wav_file);
 							} else {
-								MetaModule::f_close(&temp_wav_file);
+								sd.f_close(&temp_wav_file);
 								load_data = 0;
 								token[0] = '\0';
 								read_name = 1;
@@ -846,7 +846,7 @@ FRESULT SampleIndex::load_sampleindex_file(SampleIndex::IndexSelection use_backu
 	pr_log("\n");
 
 	// close sample index file
-	MetaModule::f_close(&temp_file);
+	sd.f_close(&temp_file);
 
 	// returns 0 if index is valid (one sample was loaded, at least)
 	return sample_was_loaded ? FR_OK : FR_INT_ERR;

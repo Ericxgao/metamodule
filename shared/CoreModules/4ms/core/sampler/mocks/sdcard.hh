@@ -6,12 +6,16 @@
 namespace SamplerKit
 {
 
-struct Sdcard {
+struct Sdcard : MetaModule::FS {
 	constexpr static std::string_view SYS_DIR = "_STS.system";
 	constexpr static std::string_view SYS_DIR_SLASH = "_STS.system/";
 
 	enum INIT_FIND_ALPHA_ACTIONS { FIND_ALPHA_DONT_INIT, FIND_ALPHA_INIT_FOLDER };
 	enum { INVALID_FILENAME = 0xFE, NO_MORE_AVAILABLE_FILES = 0xFF };
+
+	Sdcard(std::string_view root)
+		: FS(root) {
+	}
 
 	void reload() {
 	}
@@ -35,7 +39,7 @@ struct Sdcard {
 		fil->cltbl = chan_clmt[samplenum];
 		chan_clmt[samplenum][0] = 256;
 
-		res = MetaModule::f_lseek(fil, CREATE_LINKMAP);
+		res = f_lseek(fil, CREATE_LINKMAP);
 		return res;
 	}
 
@@ -44,7 +48,7 @@ struct Sdcard {
 		FRESULT res;
 		DIR dir;
 
-		res = MetaModule::f_opendir(&dir, SYS_DIR.data());
+		res = f_opendir(&dir, SYS_DIR.data());
 
 		if (res != FR_OK) {
 			return FR_INT_ERR; // fail

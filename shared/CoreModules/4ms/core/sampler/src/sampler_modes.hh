@@ -1,5 +1,4 @@
 #pragma once
-#include "CoreModules/fs_access.hh"
 #include "bank.hh"
 #include "cache.hh"
 #include "circular_buffer.hh"
@@ -198,14 +197,14 @@ public:
 			else if (res != FR_OK)
 			{
 				g_error |= FILE_CANNOT_CREATE_CLTBL;
-				MetaModule::f_close(&state.fil[samplenum]);
+				sd.f_close(&state.fil[samplenum]);
 				params.play_state = PlayStates::SILENT;
 				return;
 			}
 
 			// Check the file is really as long as the sampleSize says it is
-			if (MetaModule::f_size(&state.fil[samplenum]) < (s_sample->startOfData + s_sample->sampleSize)) {
-				s_sample->sampleSize = MetaModule::f_size(&state.fil[samplenum]) - s_sample->startOfData;
+			if (f_size(&state.fil[samplenum]) < (s_sample->startOfData + s_sample->sampleSize)) {
+				s_sample->sampleSize = f_size(&state.fil[samplenum]) - s_sample->startOfData;
 
 				if (s_sample->inst_end > s_sample->sampleSize)
 					s_sample->inst_end = s_sample->sampleSize;
@@ -282,7 +281,7 @@ public:
 				res = sd.create_linkmap(&state.fil[samplenum], samplenum);
 				if (res != FR_OK) {
 					g_error |= FILE_CANNOT_CREATE_CLTBL;
-					MetaModule::f_close(&state.fil[samplenum]);
+					sd.f_close(&state.fil[samplenum]);
 					params.play_state = PlayStates::SILENT;
 					return;
 				}
@@ -294,7 +293,7 @@ public:
 			}
 			if (g_error & LSEEK_FPTR_MISMATCH) {
 				state.sample_file_startpos =
-					align_addr(MetaModule::f_tell(&state.fil[samplenum]) - s_sample->startOfData, s_sample->blockAlign);
+					align_addr(f_tell(&state.fil[samplenum]) - s_sample->startOfData, s_sample->blockAlign);
 			}
 
 			state.cache[samplenum].low = state.sample_file_startpos;
@@ -392,7 +391,7 @@ public:
 	}
 
 	FRESULT set_file_pos(uint8_t b, uint8_t s) {
-		FRESULT r = MetaModule::f_lseek(&state.fil[s], samples[b][s].startOfData + state.sample_file_curpos[s]);
+		FRESULT r = sd.f_lseek(&state.fil[s], samples[b][s].startOfData + state.sample_file_curpos[s]);
 		if (state.fil[s].fptr != (samples[b][s].startOfData + state.sample_file_curpos[s]))
 			g_error |= LSEEK_FPTR_MISMATCH;
 		return r;
@@ -530,7 +529,7 @@ private:
 		FRESULT res;
 
 		for (samplenum = 0; samplenum < NUM_SAMPLES_PER_BANK; samplenum++) {
-			res = MetaModule::f_close(&state.fil[samplenum]);
+			res = sd.f_close(&state.fil[samplenum]);
 			if (res != FR_OK)
 				state.fil[samplenum].obj.fs = 0;
 

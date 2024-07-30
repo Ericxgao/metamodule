@@ -2,7 +2,7 @@
 #include "bank.hh"
 #include "circular_buffer.hh"
 #include "flags.hh"
-// #include "log.hh"
+#include "log.hh"
 #include "params.hh"
 #include "sampler_modes.hh"
 #include "sdcard.hh"
@@ -93,7 +93,7 @@ public:
 			res = sd.create_linkmap(&s.fil[samplenum], samplenum);
 			if (res != FR_OK) {
 				g_error |= FILE_CANNOT_CREATE_CLTBL;
-				MetaModule::f_close(&s.fil[samplenum]);
+				sd.f_close(&s.fil[samplenum]);
 				params.play_state = PlayStates::SILENT;
 				return;
 			}
@@ -144,23 +144,23 @@ public:
 					if (rd > READ_BLOCK_SIZE)
 						rd = READ_BLOCK_SIZE;
 
-					res = MetaModule::f_read(&s.fil[samplenum], file_read_buffer, rd, &br);
+					res = sd.f_read(&s.fil[samplenum], file_read_buffer, rd, &br);
 
 					if (res != FR_OK) {
 						// FixMe: Do we really want to set this in case of disk error? We don't when reversing.
 						g_error |= FILE_READ_FAIL_1;
 						s.is_buffered_to_file_end[samplenum] = 1;
-						printf("Err Read\n");
+						pr_err("Err Read\n");
 					}
 
 					if (br < rd) {
 						// unexpected EOF, but we can continue writing out the data we read
 						g_error |= FILE_UNEXPECTEDEOF;
 						s.is_buffered_to_file_end[samplenum] = 1;
-						printf("Err EOF\n");
+						pr_err("Err EOF\n");
 					}
 
-					s.sample_file_curpos[samplenum] = MetaModule::f_tell(&s.fil[samplenum]) - s_sample->startOfData;
+					s.sample_file_curpos[samplenum] = f_tell(&s.fil[samplenum]) - s_sample->startOfData;
 
 					if (s.sample_file_curpos[samplenum] >= s_sample->inst_end) {
 						s.is_buffered_to_file_end[samplenum] = 1;
@@ -176,12 +176,12 @@ public:
 						// Jump back a block
 						rd = READ_BLOCK_SIZE;
 
-						t_fptr = MetaModule::f_tell(&s.fil[samplenum]);
-						res = MetaModule::f_lseek(&s.fil[samplenum], t_fptr - READ_BLOCK_SIZE);
-						if (res || (MetaModule::f_tell(&s.fil[samplenum]) != (t_fptr - READ_BLOCK_SIZE)))
+						t_fptr = f_tell(&s.fil[samplenum]);
+						res = sd.f_lseek(&s.fil[samplenum], t_fptr - READ_BLOCK_SIZE);
+						if (res || (f_tell(&s.fil[samplenum]) != (t_fptr - READ_BLOCK_SIZE)))
 							g_error |= LSEEK_FPTR_MISMATCH;
 
-						s.sample_file_curpos[samplenum] = MetaModule::f_tell(&s.fil[samplenum]) - s_sample->startOfData;
+						s.sample_file_curpos[samplenum] = f_tell(&s.fil[samplenum]) - s_sample->startOfData;
 
 					} else {
 						// rd < READ_BLOCK_SIZE: read the first block
@@ -198,8 +198,8 @@ public:
 					}
 
 					// Read one block forward
-					t_fptr = MetaModule::f_tell(&s.fil[samplenum]);
-					res = MetaModule::f_read(&s.fil[samplenum], file_read_buffer, rd, &br);
+					t_fptr = f_tell(&s.fil[samplenum]);
+					res = sd.f_read(&s.fil[samplenum], file_read_buffer, rd, &br);
 					if (res != FR_OK)
 						g_error |= FILE_READ_FAIL_1;
 
@@ -207,10 +207,10 @@ public:
 						g_error |= FILE_UNEXPECTEDEOF;
 
 					// Jump backwards to where we started reading
-					res = MetaModule::f_lseek(&s.fil[samplenum], t_fptr);
+					res = sd.f_lseek(&s.fil[samplenum], t_fptr);
 					if (res != FR_OK)
 						g_error |= FILE_SEEK_FAIL;
-					if (MetaModule::f_tell(&s.fil[samplenum]) != t_fptr)
+					if (f_tell(&s.fil[samplenum]) != t_fptr)
 						g_error |= LSEEK_FPTR_MISMATCH;
 				}
 
