@@ -25,93 +25,32 @@ FS::~FS() = default;
 
 FRESULT FS::f_open(FIL *fp, const TCHAR *path, BYTE mode) {
 	std::string fullpath = impl->root + path;
-
 	pr_dbg("f_open (.., %s, %d)\n", fullpath.c_str(), mode);
 
-	// TODO:
-	// if (auto resposne = impl->send_open_message(fp, fullpath.c_str(), mode)) {
-	//   return response->res;
-	// }
-
-	auto msg = impl->make_open_message(fp, fullpath.c_str(), mode);
-
-	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Open>(msg, 3000)) {
-		*fp = response->fil; //copy FIL back
-		return response->res;
-	}
-
-	return FR_TIMEOUT;
+	return impl->send_open_message(fp, fullpath, mode);
 }
 
 FRESULT FS::f_close(FIL *fp) {
 	pr_dbg("f_close(%p)\n", fp);
-
-	auto msg = impl->make_close_message(fp);
-
-	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Close>(msg, 3000)) {
-		*fp = response->fil; //copy FIL back
-		return response->res;
-	}
-
-	return FR_TIMEOUT;
+	return impl->send_close_message(fp);
 }
 
 FRESULT FS::f_read(FIL *fp, void *buff, UINT btr, UINT *br) {
 	pr_dbg("f_read(%p, %p, %u, ...)\n", fp, buff, btr);
-	if (btr > 64 * 1024) {
-		pr_dbg("Too large\n");
-		return FR_NOT_ENOUGH_CORE;
-	}
-
-	auto msg = impl->make_read_message(fp, btr);
-
-	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Read>(msg, 3000)) {
-		pr_dbg("f_read(..., -> %u) -> %u\n", response->bytes_read, response->res);
-		*fp = response->fil; //copy FIL back
-		*br = response->bytes_read;
-		// copy buffer
-		std::copy(response->buffer.begin(), std::next(response->buffer.begin(), response->bytes_read), (char *)buff);
-
-		pr_dbg("\n---\n%.*s\n---\n", response->bytes_read, response->buffer.data());
-		return response->res;
-	}
-
-	return FR_TIMEOUT;
+	return impl->send_read_message(fp, (char *)buff, btr, br);
 }
 
 TCHAR *FS::f_gets(TCHAR *buff, int len, FIL *fp) {
+	if (len < 0) {
+		return nullptr;
+	}
 	pr_dbg("f_gets(%p, %d, %p)\n", buff, len, fp);
-	if (len > 64 * 1024) {
-		pr_dbg("Too large\n");
-	}
-
-	if (auto response = impl->send_gets_message(fp, len)) {
-		//copy FIL back
-		*fp = response->fil;
-
-		// copy buffer until we hit a \0
-		std::strcpy(buff, response->buffer.data());
-
-		if (response->res == FR_OK && response->buffer.data() != nullptr)
-			pr_dbg("\n---\n%s\n---\n", response->buffer.data());
-
-		return response->res == FR_OK ? buff : nullptr;
-	}
-	return nullptr;
+	return impl->send_gets_message(fp, std::span<char>(buff, (size_t)len));
 }
 
 FRESULT FS::f_lseek(FIL *fp, uint64_t ofs) {
 	pr_dbg("f_lseek(%p, %llu)\n", fp, ofs);
-
-	auto msg = impl->make_seek_message(fp, ofs);
-
-	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Seek>(msg, 3000)) {
-		*fp = response->fil; //copy FIL back
-		return response->res;
-	}
-
-	pr_dbg("f_open error\n");
-	return FR_INT_ERR;
+	return impl->send_seek_message(fp, ofs);
 }
 
 FRESULT FS::f_write(FIL *fp, const void *buff, UINT btw, UINT *bw) {

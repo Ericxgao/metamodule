@@ -18,10 +18,11 @@ namespace StaticBuffers
 extern StreamConf::Audio::AudioInBlock audio_in_dma_block;
 extern StreamConf::Audio::AudioOutBlock audio_out_dma_block;
 extern std::array<char, 65536> raw_patch_data;
-extern std::array<uint8_t, 65536> module_fs_buffer;
 extern IntercoreStorageMessage icc_shared_message;
 extern IntercoreModuleFS::Message icc_module_fs_message_core0;
 extern IntercoreModuleFS::Message icc_module_fs_message_core1;
+extern std::array<uint8_t, 64 * 1024> module_fs_buffer_core0;
+extern std::array<uint8_t, 64 * 1024> module_fs_buffer_core1;
 extern PatchDirList patch_dir_list;
 extern DoubleBufParamBlock param_blocks;
 extern DoubleAuxStreamBlock auxsignal_block;
