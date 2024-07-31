@@ -59,6 +59,13 @@ struct Read {
 	FRESULT res{};
 };
 
+struct GetS {
+	FIL fil{};
+	std::span<char> buffer;
+	uint32_t bytes_read{};
+	FRESULT res{};
+};
+
 struct Seek {
 	FIL fil{};
 	uint64_t file_offset{};
@@ -90,7 +97,7 @@ struct Stat {
 
 //280B with DIR* FIL* FILINFO*
 //880B with DIR FIL FILINFO
-using Message = std::variant<None, Open, Close, Read, Seek, OpenDir, CloseDir, ReadDir, Stat>;
+using Message = std::variant<None, Open, Close, Read, GetS, Seek, OpenDir, CloseDir, ReadDir, Stat>;
 
 } // namespace IntercoreModuleFS
 

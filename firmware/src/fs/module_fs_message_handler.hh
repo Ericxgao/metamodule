@@ -56,11 +56,20 @@ struct ModuleFSMessageHandler {
 					msg.res = f_read(&msg.fil, msg.buffer.data(), msg.buffer.size(), &bytes_read);
 					msg.bytes_read = bytes_read;
 					pr_dbg("M4: f_read(%p, %p, %zu, -> %u) -> %d\n",
-						   msg.fil,
+						   &msg.fil,
 						   msg.buffer.data(),
 						   msg.buffer.size(),
 						   bytes_read,
 						   msg.res);
+					return true;
+				},
+
+				[](IntercoreModuleFS::GetS &msg) {
+					auto txt = f_gets(msg.buffer.data(), (int)msg.buffer.size(), &msg.fil);
+
+					msg.res = txt == nullptr ? FR_INT_ERR : FR_OK;
+
+					pr_dbg("M4: f_gets(%p, %zu, %p) -> %p\n", msg.buffer.data(), msg.buffer.size(), &msg.fil, txt);
 					return true;
 				},
 
