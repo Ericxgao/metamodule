@@ -9,7 +9,7 @@ namespace SamplerKit
 class Controls {
 public:
 	// ADCs (Pots and CV):
-	std::array<uint16_t, NumCVs> cvs{0, 0, 0, 0, 0};
+	std::array<uint16_t, NumCVs> cvs{2048, 0, 0, 0, 0};
 	std::array<uint16_t, NumPots> pots{0, 0, 0, 0};
 
 	// Buttons/Switches:

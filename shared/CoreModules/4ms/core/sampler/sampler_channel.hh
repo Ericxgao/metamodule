@@ -120,14 +120,15 @@ public:
 	}
 
 	std::optional<float> get_output(unsigned output_id) const {
+		static constexpr int32_t kMaxValue = MathTools::ipow(2, 23);
 		if (output_id == mapping.OutL)
-			return outblock[out_buf_pos].chan[0];
+			return (float)outblock[out_buf_pos].chan[0] / (float)kMaxValue;
 
 		else if (output_id == mapping.OutR)
-			return outblock[out_buf_pos].chan[1];
+			return (float)outblock[out_buf_pos].chan[1] / (float)kMaxValue;
 
 		else if (output_id == mapping.EndOut)
-			return controls.end_out.sideload_get();
+			return controls.end_out.sideload_get() ? 8.f : 0.f;
 
 		else
 			return 0;
@@ -171,11 +172,6 @@ private:
 
 	SamplerKit::Sampler sampler;
 
-	// Do we need these? or just pass to params
-	// SamplerKit::Sdcard &sd;
-	// SamplerKit::BankManager &banks;
-	// SamplerKit::UserSettings &settings;
-
 	static constexpr float GateThreshold = 1.0f;
 
 	float sample_rate = 48000;
@@ -186,8 +182,8 @@ private:
 
 	std::array<SamplerKit::CircularBuffer, SamplerKit::NumSamplesPerBank> play_buff;
 
-	AudioStreamConf::AudioInBlock inblock;
-	AudioStreamConf::AudioOutBlock outblock;
+	SamplerKit::AudioStreamConf::AudioInBlock inblock;
+	SamplerKit::AudioStreamConf::AudioOutBlock outblock;
 	uint32_t out_buf_pos = outblock.size() - 1;
 };
 

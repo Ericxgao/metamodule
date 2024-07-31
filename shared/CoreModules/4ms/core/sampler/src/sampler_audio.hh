@@ -18,7 +18,7 @@ class SamplerAudio {
 	SampleList &samples;
 	std::array<CircularBuffer, NumSamplesPerBank> &play_buff;
 
-	using ChanBuff = std::array<AudioStreamConf::SampleT, AudioStreamConf::BlockSize>;
+	using ChanBuff = std::array<SamplerKit::AudioStreamConf::SampleT, SamplerKit::AudioStreamConf::BlockSize>;
 
 public:
 	float env_level;
@@ -36,7 +36,8 @@ public:
 		, play_buff{splay_buff} {
 	}
 
-	void update(const AudioStreamConf::AudioInBlock &inblock, AudioStreamConf::AudioOutBlock &outblock) {
+	void update(const SamplerKit::AudioStreamConf::AudioInBlock &inblock,
+				SamplerKit::AudioStreamConf::AudioOutBlock &outblock) {
 		ChanBuff outL;
 		ChanBuff outR;
 
@@ -44,8 +45,6 @@ public:
 			for (auto [in, out] : zip(inblock, outblock)) {
 				auto c0 = in.sign_extend(in.chan[0]);
 				auto c1 = in.sign_extend(in.chan[1]);
-				c0 *= Brain::AudioGain * 0.913f;
-				c1 *= Brain::AudioGain * 0.913f;
 				out.chan[0] = MathTools::signed_saturate(c0, 24);
 				out.chan[1] = MathTools::signed_saturate(c1, 24);
 			}
@@ -56,27 +55,19 @@ public:
 
 		if (params.settings.stereo_mode) {
 			// Stereo mode
-			// Left Out = Left Sample channel
-			// Right Out = Right Sample channel
-			//
 			for (auto [out, L, R] : zip(outblock, outL, outR)) {
-				// Chan 1 L + Chan 2 L clipped at signed 16-bits
-				int32_t invL = -L;
-				int32_t invR = -R;
-				out.chan[1] = MathTools::signed_saturate(invL, 24);
-				out.chan[0] = MathTools::signed_saturate(invR, 24);
+				out.chan[0] = MathTools::signed_saturate(L, 24);
+				out.chan[1] = MathTools::signed_saturate(R, 24);
 			}
 			return;
 		}
 
 		{
 			// Mono mode
-			// Left Out = -Right Out = average of L+R
 			for (auto [out, L, R] : zip(outblock, outL, outR)) {
 				// Average is already done in play_audio_from_buffer(), and put into outL
-				int32_t invL = -L;
-				out.chan[1] = MathTools::signed_saturate(invL, 24);
 				out.chan[0] = MathTools::signed_saturate(L, 24);
+				out.chan[1] = 0;
 			}
 		}
 	}

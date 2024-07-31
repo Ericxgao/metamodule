@@ -49,7 +49,7 @@ TCHAR *FS::f_gets(TCHAR *buff, int len, FIL *fp) {
 }
 
 FRESULT FS::f_lseek(FIL *fp, uint64_t ofs) {
-	pr_dbg("f_lseek(%p, %llu)\n", fp, ofs);
+	pr_dbg("f_lseek(%p, %lld)\n", fp, ofs);
 	return impl->send_seek_message(fp, ofs);
 }
 
