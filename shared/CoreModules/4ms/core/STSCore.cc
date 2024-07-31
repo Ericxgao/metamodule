@@ -21,11 +21,11 @@ private:
 	// Run this in the low-pri thread:
 	AsyncThread fs_thread{[this]() {
 		if (tm - last_tm >= 1.0f) {
-			DebugPin1High();
+			// DebugPin1High();
 			last_tm = tm;
 			chanL.fs_process(tm);
 			chanR.fs_process(tm);
-			DebugPin1Low();
+			// DebugPin1Low();
 			// index_loader.handle_events();
 		}
 	}};
@@ -40,11 +40,9 @@ public:
 	}
 
 	void update() override {
-		DebugPin0High();
 		tm += ms_per_update;
 		chanL.update(tm);
 		chanR.update(tm);
-		DebugPin0Low();
 
 		if (!started_fs_thread && id > 0) {
 			fs_thread.start(id);
