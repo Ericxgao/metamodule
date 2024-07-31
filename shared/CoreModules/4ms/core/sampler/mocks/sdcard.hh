@@ -37,10 +37,10 @@ struct Sdcard : MetaModule::FS {
 	FRESULT create_linkmap(FIL *fil, uint8_t samplenum) {
 		FRESULT res = FR_OK;
 
-		fil->cltbl = chan_clmt[samplenum];
-		chan_clmt[samplenum][0] = 256;
+		// fil->cltbl = chan_clmt[samplenum];
+		// chan_clmt[samplenum][0] = 256;
 
-		res = f_lseek(fil, CREATE_LINKMAP);
+		// res = f_lseek(fil, CREATE_LINKMAP);
 		return res;
 	}
 
