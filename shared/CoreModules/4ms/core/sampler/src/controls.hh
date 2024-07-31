@@ -1,6 +1,7 @@
 #pragma once
 #include "elements.hh"
 #include "sampler/mocks/mocks.hh"
+#include <cmath>
 
 namespace SamplerKit
 {
@@ -8,8 +9,8 @@ namespace SamplerKit
 class Controls {
 public:
 	// ADCs (Pots and CV):
-	std::array<uint16_t, NumCVs> cvs;
-	std::array<uint16_t, NumPots> pots;
+	std::array<uint16_t, NumCVs> cvs{0, 0, 0, 0, 0};
+	std::array<uint16_t, NumPots> pots{0, 0, 0, 0};
 
 	// Buttons/Switches:
 	Mocks::Button play_button;

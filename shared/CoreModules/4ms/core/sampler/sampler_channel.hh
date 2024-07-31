@@ -102,13 +102,13 @@ public:
 			controls.cvs[SamplerKit::PitchCV] = bipolar_cv(volts);
 
 		} else if (input_id == mapping.LengthCvIn) {
-			controls.pots[SamplerKit::LengthCV] = unipolar_cv(volts);
+			controls.cvs[SamplerKit::LengthCV] = unipolar_cv(volts);
 
 		} else if (input_id == mapping.StartPosCvIn) {
-			controls.pots[SamplerKit::StartCV] = unipolar_cv(volts);
+			controls.cvs[SamplerKit::StartCV] = unipolar_cv(volts);
 
 		} else if (input_id == mapping.SampleCvIn) {
-			controls.pots[SamplerKit::SampleCV] = unipolar_cv(volts);
+			controls.cvs[SamplerKit::SampleCV] = unipolar_cv(volts);
 
 		} else if (input_id == mapping.RecIn) {
 			//not used

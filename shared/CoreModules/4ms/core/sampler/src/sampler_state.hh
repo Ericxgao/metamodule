@@ -26,8 +26,14 @@ struct SampleState {
 
 	bool cached_rev_state[NumSamplesPerBank];
 
-	FIL fil[NumSamplesPerBank];
+	FIL fil[NumSamplesPerBank]{};
 	Cache cache[NumSamplesPerBank];
+
+	SampleState() {
+		for (auto &f : fil) {
+			f.obj.fs = nullptr;
+		}
+	}
 
 	void check_sample_end(Params &params,
 						  SampleList &samples,
