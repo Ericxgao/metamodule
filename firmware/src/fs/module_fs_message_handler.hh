@@ -24,7 +24,6 @@ struct ModuleFSMessageHandler {
 			auto message = comm.get_new_message();
 
 			if (auto response = handle_fatfs_message(message)) {
-				pr_dbg("M4 sending response\n");
 				while (!comm.send_message(*response))
 					;
 			}

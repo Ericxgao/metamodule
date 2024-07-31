@@ -25,7 +25,7 @@ FS::~FS() = default;
 
 FRESULT FS::f_open(FIL *fp, const TCHAR *path, BYTE mode) {
 	std::string fullpath = impl->root + path;
-	pr_dbg("f_open (.., %s, %d)\n", fullpath.c_str(), mode);
+	pr_dbg("f_open (%p, \"%s\", %d)\n", fp, fullpath.c_str(), mode);
 
 	return impl->send_open_message(fp, fullpath, mode);
 }
