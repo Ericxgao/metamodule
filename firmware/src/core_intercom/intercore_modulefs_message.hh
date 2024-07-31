@@ -11,8 +11,6 @@ struct IntercoreModuleFSMessage {
 	enum MessageType : uint32_t {
 		None,
 		FatFsOpMessage,
-
-		NumRequests,
 	};
 
 	enum FatFsOp : uint8_t { Noop, Open, Close, Read, Seek, Opendir, Closedir, Readdir, Stat };
