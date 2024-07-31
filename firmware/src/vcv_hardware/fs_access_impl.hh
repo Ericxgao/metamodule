@@ -4,6 +4,7 @@
 #include "core_intercom/intercore_modulefs_message.hh"
 #include "drivers/cache.hh"
 #include "drivers/inter_core_comm.hh"
+#include "util/overloaded.hh"
 #include "util/padded_aligned.hh"
 #include <optional>
 
@@ -12,57 +13,56 @@ namespace MetaModule
 
 namespace StaticBuffers
 {
-extern IntercoreModuleFSMessage icc_module_fs_message_core0;
-extern IntercoreModuleFSMessage icc_module_fs_message_core1;
+extern IntercoreModuleFS::Message icc_module_fs_message_core0;
+extern IntercoreModuleFS::Message icc_module_fs_message_core1;
 extern std::array<uint8_t, 65536> module_fs_buffer;
 } // namespace StaticBuffers
 
 struct FS::Impl {
-	using enum IntercoreModuleFSMessage::MessageType;
+	// using enum IntercoreModuleFS::Message::MessageType;
 
 public:
 	Impl(std::string_view root)
 		: root{root} {
 	}
 
-	static IntercoreModuleFSMessage make_close_message(FIL *fil) {
-		return {
-			.message_type = Close,
-			.fil = fil,
+	IntercoreModuleFS::Message make_close_message(FIL *fil) {
+		active_fil = fil;
+		return IntercoreModuleFS::Close{
+			.fil = *fil,
 		};
 	}
 
-	IntercoreModuleFSMessage make_open_message(FIL *fil, std::string_view filename, uint8_t read_mode) {
-		mdrivlib::SystemCache::clean_dcache_by_range(&padded_file, sizeof(padded_file));
-
-		return {
-			.message_type = Open,
-			.path = filename,
-			.fil = &padded_file.data,
-			.mode = read_mode,
+	IntercoreModuleFS::Message make_open_message(FIL *fil, std::string_view filename, uint8_t read_mode) {
+		//Store the fil ptr internally, and copy it back after we get a valid response
+		active_fil = fil;
+		return IntercoreModuleFS::Open{
+			.path = StaticString<255>{filename},
+			.access_mode = read_mode,
 		};
 	}
 
-	static IntercoreModuleFSMessage make_seek_message(FIL *fil, uint64_t offset) {
-		return {
-			.message_type = Seek,
-			.fil = fil,
+	IntercoreModuleFS::Message make_seek_message(FIL *fil, uint64_t offset) {
+		active_fil = fil;
+		return IntercoreModuleFS::Seek{
+			.fil = *fil,
 			.file_offset = offset,
 		};
 	}
 
-	static IntercoreModuleFSMessage make_read_message(FIL *fil, std::span<char> buffer) {
-		return {
-			.message_type = Read,
-			.buffer = buffer,
-			.fil = fil,
+	IntercoreModuleFS::Message make_read_message(FIL *fil, std::span<char> buffer, UINT *bytes_read) {
+		active_fil = fil;
+		active_buffer = buffer;
+		active_bytes_read = bytes_read;
+		return IntercoreModuleFS::Read{
+			.fil = *fil,
+			.buffer = file_buffer.subspan(0, buffer.size()),
 		};
 	}
 
-	std::optional<IntercoreModuleFSMessage> get_response_or_timeout(IntercoreModuleFSMessage message,
-																	uint32_t timeout = 3000) {
-		auto request_type = message.message_type;
-
+	std::optional<IntercoreModuleFS::Message> get_response_or_timeout(IntercoreModuleFS::Message message,
+																	  uint32_t timeout = 3000) {
+		// Send
 		auto start = HAL_GetTick();
 
 		while (!send(message)) {
@@ -73,19 +73,46 @@ public:
 			}
 		}
 
+		// Get Response
 		start = HAL_GetTick();
 
 		while (true) {
-			if (auto msg = get_message(); msg.message_type != None) {
-				if (msg.message_type == request_type) {
+			auto response = get_message();
+			auto got_response = std::visit(overloaded{
+											   [](IntercoreModuleFS::None &msg) { return false; },
+											   [this](IntercoreModuleFS::Open &msg) {
+												   *active_fil = msg.fil;
+												   return true;
+											   },
+											   [this](IntercoreModuleFS::Seek &msg) {
+												   *active_fil = msg.fil;
+												   return true;
+											   },
+											   [this](IntercoreModuleFS::Read &msg) {
+												   *active_fil = msg.fil;
+												   std::copy(msg.buffer.begin(),
+															 std::next(msg.buffer.begin(), msg.bytes_read),
+															 active_buffer.begin());
+												   *active_bytes_read = msg.bytes_read;
+												   return true;
+											   },
+											   [this](IntercoreModuleFS::Close &msg) {
+												   *active_fil = msg.fil;
+												   return true;
+											   },
+											   [](auto &msg) {
+												   pr_dbg("Got unknown response messsage\n");
+												   return true;
+											   },
+										   },
+										   response);
 
-					mdrivlib::SystemCache::invalidate_dcache_by_range(&padded_file, sizeof(padded_file));
-					return msg;
-
-				} else {
-					pr_dbg("Got unexpected response messsage type (%u vs %u)\n", msg.message_type, request_type);
-					return {};
+			if (got_response) {
+				if (response.index() != message.index()) {
+					pr_dbg("Got unexpected response messsage type (%u vs %u)\n", message.index(), response.index());
+					return std::nullopt;
 				}
+				return response;
 			}
 
 			if (HAL_GetTick() - start > timeout) {
@@ -101,14 +128,14 @@ public:
 		return __get_MPIDR() & 0b1;
 	}
 
-	static bool send(IntercoreModuleFSMessage const &message) {
+	static bool send(IntercoreModuleFS::Message const &message) {
 		if (core() == 1)
 			return comm_core1.send_message(message);
 		else
 			return comm_core0.send_message(message);
 	}
 
-	static IntercoreModuleFSMessage get_message() {
+	static IntercoreModuleFS::Message get_message() {
 		if (core() == 1)
 			return comm_core1.get_new_message();
 		else
@@ -119,8 +146,14 @@ public:
 	std::string root;
 	std::string cwd;
 
-	PaddedAligned<FIL, 64> padded_file;
-	PaddedAligned<DIR, 64> padded_dir;
+	FIL *active_fil;
+	std::span<char> active_buffer;
+	UINT *active_bytes_read;
+
+	static inline std::span<char> file_buffer{(char *)StaticBuffers::module_fs_buffer.data(),
+											  StaticBuffers::module_fs_buffer.size()};
+	// PaddedAligned<FIL, 64> padded_file;
+	// PaddedAligned<DIR, 64> padded_dir;
 	//buffer?
 
 private:
@@ -128,10 +161,10 @@ private:
 	static constexpr uint32_t IPCC_ChanCore1 = 3;
 
 	using CommModuleFS0 =
-		mdrivlib::InterCoreComm<mdrivlib::ICCRoleType::Initiator, IntercoreModuleFSMessage, IPCC_ChanCore0>;
+		mdrivlib::InterCoreComm<mdrivlib::ICCRoleType::Initiator, IntercoreModuleFS::Message, IPCC_ChanCore0>;
 
 	using CommModuleFS1 =
-		mdrivlib::InterCoreComm<mdrivlib::ICCRoleType::Initiator, IntercoreModuleFSMessage, IPCC_ChanCore1>;
+		mdrivlib::InterCoreComm<mdrivlib::ICCRoleType::Initiator, IntercoreModuleFS::Message, IPCC_ChanCore1>;
 
 	static inline CommModuleFS0 comm_core0{StaticBuffers::icc_module_fs_message_core0};
 	static inline CommModuleFS1 comm_core1{StaticBuffers::icc_module_fs_message_core1};

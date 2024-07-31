@@ -2,33 +2,31 @@
 #include "core_intercom/intercore_modulefs_message.hh"
 #include "drivers/inter_core_comm.hh"
 #include "fs/fatfs/fat_file_io.hh"
+#include "util/overloaded.hh"
 #include <optional>
 
 namespace MetaModule
 {
 
 struct ModuleFSMessageHandler {
-	using MessageType = IntercoreModuleFSMessage::MessageType;
 
-	ModuleFSMessageHandler(IntercoreModuleFSMessage *shared_message_core0,
-						   IntercoreModuleFSMessage *shared_message_core1)
+	ModuleFSMessageHandler(IntercoreModuleFS::Message *shared_message_core0,
+						   IntercoreModuleFS::Message *shared_message_core1)
 		: intercore_comm_core0{*shared_message_core0}
 		, intercore_comm_core1{*shared_message_core1} {
 	}
 
-	mdrivlib::InterCoreComm<mdrivlib::ICCRoleType::Responder, IntercoreModuleFSMessage, 2> intercore_comm_core0;
-	mdrivlib::InterCoreComm<mdrivlib::ICCRoleType::Responder, IntercoreModuleFSMessage, 3> intercore_comm_core1;
+	mdrivlib::InterCoreComm<mdrivlib::ICCRoleType::Responder, IntercoreModuleFS::Message, 2> intercore_comm_core0;
+	mdrivlib::InterCoreComm<mdrivlib::ICCRoleType::Responder, IntercoreModuleFS::Message, 3> intercore_comm_core1;
 
 	void process() {
 		auto process_core = [this](auto &comm) {
 			auto message = comm.get_new_message();
 
-			if (message.message_type != MessageType::None) {
-
-				if (auto response = handle_fatfs_message(message)) {
-					while (!comm.send_message(*response))
-						;
-				}
+			if (auto response = handle_fatfs_message(message)) {
+				pr_dbg("M4 sending response\n");
+				while (!comm.send_message(*response))
+					;
 			}
 		};
 
@@ -36,57 +34,48 @@ struct ModuleFSMessageHandler {
 		process_core(intercore_comm_core1);
 	}
 
-	std::optional<IntercoreModuleFSMessage> handle_fatfs_message(IntercoreModuleFSMessage &msg) {
-		switch (msg.message_type) {
+	std::optional<IntercoreModuleFS::Message> handle_fatfs_message(IntercoreModuleFS::Message &message) {
+		bool handled = std::visit(
+			overloaded{
+				[](auto &msg) { return false; },
 
-			case MessageType::Open: {
-				auto res = f_open(msg.fil, msg.path.data(), msg.mode);
+				[](IntercoreModuleFS::Open &msg) {
+					msg.res = f_open(&msg.fil, msg.path.c_str(), msg.access_mode);
+					pr_dbg("M4: f_open(%p, %s, %d) -> %d\n", &msg.fil, msg.path.c_str(), msg.access_mode, msg.res);
+					return true;
+				},
 
-				IntercoreModuleFSMessage response{
-					.message_type = MessageType::Open,
-					.fil = msg.fil,
-					.res = res,
-				};
+				[](IntercoreModuleFS::Seek &msg) {
+					msg.res = f_lseek(&msg.fil, msg.file_offset);
+					pr_dbg("M4: f_lseek(%p, %llu) -> %d\n", &msg.fil, msg.file_offset, msg.res);
+					return true;
+				},
 
-				pr_dbg("M4: f_open(%p, %s, %d) -> %d\n", msg.fil, msg.path.data(), msg.mode, res);
-				return response;
-			} break;
+				[](IntercoreModuleFS::Read &msg) {
+					UINT bytes_read = 0;
+					msg.res = f_read(&msg.fil, msg.buffer.data(), msg.buffer.size(), &bytes_read);
+					msg.bytes_read = bytes_read;
+					pr_dbg("M4: f_read(%p, %p, %zu, -> %u) -> %d\n",
+						   msg.fil,
+						   msg.buffer.data(),
+						   msg.buffer.size(),
+						   bytes_read,
+						   msg.res);
+					return true;
+				},
 
-			case MessageType::Seek: {
-				auto res = f_lseek(msg.fil, msg.file_offset);
+				[](IntercoreModuleFS::Close &msg) {
+					msg.res = f_close(&msg.fil);
+					pr_dbg("M4: f_close(%p) -> %d\n", msg.fil, msg.res);
+					return true;
+				},
+			},
+			message);
 
-				IntercoreModuleFSMessage response{
-					.message_type = MessageType::Seek,
-					.fil = msg.fil,
-					.res = res,
-				};
-
-				pr_dbg("M4: f_lseek(%p, %s, %d) -> %d\n", msg.fil, msg.path.data(), msg.mode, res);
-				return response;
-
-			} break;
-
-			case MessageType::Read: {
-				uint32_t bytes_read = 0;
-				auto res = f_read(msg.fil, msg.buffer.data(), msg.buffer.size(), &bytes_read);
-
-				IntercoreModuleFSMessage response{
-					.message_type = MessageType::Seek,
-					.fil = msg.fil,
-					.res = res,
-				};
-
-				pr_dbg("M4: f_lseek(%p, %s, %d) -> %d\n", msg.fil, msg.path.data(), msg.mode, res);
-				return response;
-
-			} break;
-
-			default:
-				pr_dbg("M4: unknown Module FS msg %d\n", msg.message_type);
-				break;
-		}
-
-		return std::nullopt;
+		if (handled) {
+			return message;
+		} else
+			return std::nullopt;
 	}
 };
 

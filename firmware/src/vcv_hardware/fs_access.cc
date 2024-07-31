@@ -12,8 +12,8 @@ namespace MetaModule
 
 namespace StaticBuffers
 {
-extern IntercoreModuleFSMessage icc_module_fs_message_core0;
-extern IntercoreModuleFSMessage icc_module_fs_message_core1;
+extern IntercoreModuleFS::Message icc_module_fs_message_core0;
+extern IntercoreModuleFS::Message icc_module_fs_message_core1;
 } // namespace StaticBuffers
 
 FS::FS(std::string_view root)
@@ -29,18 +29,14 @@ FRESULT FS::f_open(FIL *fp, const char *path, uint8_t mode) {
 
 	auto msg = impl->make_open_message(fp, fullpath.c_str(), mode);
 
-	auto response = impl->get_response_or_timeout(msg, 3000);
-
-	if (response.has_value()) {
-		if (response->res == FR_OK) {
-			// Copy fp back to caller
-			*fp = impl->padded_file.data;
+	if (auto response = impl->get_response_or_timeout(msg, 3000)) {
+		if (auto f_open_resp = std::get_if<IntercoreModuleFS::Open>(&response.value())) {
+			return f_open_resp->res;
 		}
-		return response->res;
-
-	} else {
-		return FR_INT_ERR;
 	}
+
+	pr_dbg("f_open error\n");
+	return FR_INT_ERR;
 }
 
 FRESULT FS::f_close(FIL *fp) {
@@ -48,8 +44,21 @@ FRESULT FS::f_close(FIL *fp) {
 	return FR_INT_ERR;
 }
 
-FRESULT FS::f_read(FIL *fp, void *buff, unsigned btr, unsigned *br) {
-	pr_dbg("f_read %p\n", fp);
+FRESULT FS::f_read(FIL *fp, void *buff, UINT btr, UINT *br) {
+	pr_dbg("f_read(%p, %p, %u, ...)\n", fp, buff, btr);
+	if (btr > 64 * 1024) {
+		pr_dbg("Too large\n");
+	}
+
+	auto msg = impl->make_read_message(fp, std::span<char>{(char *)buff, btr}, br);
+
+	if (auto response = impl->get_response_or_timeout(msg, 3000)) {
+		if (auto f_read_resp = std::get_if<IntercoreModuleFS::Read>(&response.value())) {
+			pr_dbg("f_read(..., -> %u) -> %u\n", f_read_resp->bytes_read, f_read_resp->res);
+			return f_read_resp->res;
+		}
+	}
+
 	return FR_INT_ERR;
 }
 
@@ -60,6 +69,16 @@ FRESULT FS::f_write(FIL *fp, const void *buff, UINT btw, UINT *bw) {
 
 FRESULT FS::f_lseek(FIL *fp, uint64_t ofs) {
 	pr_dbg("f_lseek %p, %llu\n", fp, ofs);
+
+	auto msg = impl->make_seek_message(fp, ofs);
+
+	if (auto response = impl->get_response_or_timeout(msg, 3000)) {
+		if (auto f_seek_resp = std::get_if<IntercoreModuleFS::Seek>(&response.value())) {
+			return f_seek_resp->res;
+		}
+	}
+
+	pr_dbg("f_open error\n");
 	return FR_INT_ERR;
 }
 
