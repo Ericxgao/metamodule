@@ -9,7 +9,6 @@ namespace MetaModule
 
 struct ModuleFSMessageHandler {
 	using MessageType = IntercoreModuleFSMessage::MessageType;
-	using FatFsOp = IntercoreModuleFSMessage::FatFsOp;
 
 	ModuleFSMessageHandler(IntercoreModuleFSMessage *shared_message_core0,
 						   IntercoreModuleFSMessage *shared_message_core1)
@@ -23,14 +22,13 @@ struct ModuleFSMessageHandler {
 	void process() {
 		auto process_core = [this](auto &comm) {
 			auto message = comm.get_new_message();
-			if (message.message_type == MessageType::FatFsOpMessage) {
-				pr_dbg("Got FatFsOpMessage\n");
+
+			if (message.message_type != MessageType::None) {
+
 				if (auto response = handle_fatfs_message(message)) {
 					while (!comm.send_message(*response))
 						;
 				}
-			} else if (message.message_type != MessageType::None) {
-				pr_dbg("Got unknown msg %d\n", message.message_type);
 			}
 		};
 
@@ -39,23 +37,56 @@ struct ModuleFSMessageHandler {
 	}
 
 	std::optional<IntercoreModuleFSMessage> handle_fatfs_message(IntercoreModuleFSMessage &msg) {
-		if (msg.fatfs_op == IntercoreModuleFSMessage::FatFsOp::Open) {
-			pr_dbg("Got f_open");
-			auto res = f_open(msg.fil, msg.path.data(), msg.mode);
-			IntercoreModuleFSMessage response{
-				.message_type = MessageType::FatFsOpMessage,
-				.fatfs_req_id = msg.fatfs_req_id,
-				.fatfs_op = msg.fatfs_op,
-				.fil = msg.fil,
-				.res = res,
-			};
-			pr_dbg("->%d\n", res);
-			return response;
+		switch (msg.message_type) {
 
-		} else {
-			pr_err("Did not handle message with fatfs_op %d\n", msg.fatfs_op);
-			return std::nullopt;
+			case MessageType::Open: {
+				auto res = f_open(msg.fil, msg.path.data(), msg.mode);
+
+				IntercoreModuleFSMessage response{
+					.message_type = MessageType::Open,
+					.fil = msg.fil,
+					.res = res,
+				};
+
+				pr_dbg("M4: f_open(%p, %s, %d) -> %d\n", msg.fil, msg.path.data(), msg.mode, res);
+				return response;
+			} break;
+
+			case MessageType::Seek: {
+				auto res = f_lseek(msg.fil, msg.file_offset);
+
+				IntercoreModuleFSMessage response{
+					.message_type = MessageType::Seek,
+					.fil = msg.fil,
+					.res = res,
+				};
+
+				pr_dbg("M4: f_lseek(%p, %s, %d) -> %d\n", msg.fil, msg.path.data(), msg.mode, res);
+				return response;
+
+			} break;
+
+			case MessageType::Read: {
+				uint32_t bytes_read = 0;
+				auto res = f_read(msg.fil, msg.buffer.data(), msg.buffer.size(), &bytes_read);
+
+				IntercoreModuleFSMessage response{
+					.message_type = MessageType::Seek,
+					.fil = msg.fil,
+					.res = res,
+				};
+
+				pr_dbg("M4: f_lseek(%p, %s, %d) -> %d\n", msg.fil, msg.path.data(), msg.mode, res);
+				return response;
+
+			} break;
+
+			default:
+				pr_dbg("M4: unknown Module FS msg %d\n", msg.message_type);
+				break;
 		}
+
+		return std::nullopt;
 	}
 };
 

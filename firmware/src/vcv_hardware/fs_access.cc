@@ -27,9 +27,11 @@ FRESULT FS::f_open(FIL *fp, const char *path, uint8_t mode) {
 
 	pr_dbg("f_open %s, mode:%d\n", fullpath.c_str(), mode);
 
-	auto msg = impl->make_open_message(&impl->padded_file.data, fullpath.c_str(), mode);
+	auto msg = impl->make_open_message(fp, fullpath.c_str(), mode);
 
-	if (auto response = impl->get_response_or_timeout(msg, 3000); response.has_value()) {
+	auto response = impl->get_response_or_timeout(msg, 3000);
+
+	if (response.has_value()) {
 		if (response->res == FR_OK) {
 			// Copy fp back to caller
 			*fp = impl->padded_file.data;

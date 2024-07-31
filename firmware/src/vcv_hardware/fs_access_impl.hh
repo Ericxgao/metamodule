@@ -2,6 +2,7 @@
 #include "CoreModules/fs_access.hh"
 #include "console/pr_dbg.hh"
 #include "core_intercom/intercore_modulefs_message.hh"
+#include "drivers/cache.hh"
 #include "drivers/inter_core_comm.hh"
 #include "util/padded_aligned.hh"
 #include <optional>
@@ -13,84 +14,58 @@ namespace StaticBuffers
 {
 extern IntercoreModuleFSMessage icc_module_fs_message_core0;
 extern IntercoreModuleFSMessage icc_module_fs_message_core1;
+extern std::array<uint8_t, 65536> module_fs_buffer;
 } // namespace StaticBuffers
 
 struct FS::Impl {
 	using enum IntercoreModuleFSMessage::MessageType;
-	using FatFsOp = IntercoreModuleFSMessage::FatFsOp;
 
 public:
 	Impl(std::string_view root)
 		: root{root} {
 	}
 
-	uint32_t unique_id() {
-		return last_uid++;
-	}
-
-	static uint32_t core() {
-		return __get_MPIDR() & 0b1;
-	}
-
-	static std::optional<uint32_t> send(IntercoreModuleFSMessage const &message) {
-		if (core() == 1)
-			return comm_core1.send_message(message) ? message.fatfs_req_id : std::optional<uint32_t>{};
-		else
-			return comm_core0.send_message(message) ? message.fatfs_req_id : std::optional<uint32_t>{};
-	}
-
-	IntercoreModuleFSMessage make_close_message(FIL *fil) {
+	static IntercoreModuleFSMessage make_close_message(FIL *fil) {
 		return {
-			.message_type = FatFsOpMessage,
-			.fatfs_req_id = unique_id(),
-			.fatfs_op = FatFsOp::Close,
+			.message_type = Close,
 			.fil = fil,
 		};
 	}
 
 	IntercoreModuleFSMessage make_open_message(FIL *fil, std::string_view filename, uint8_t read_mode) {
+		mdrivlib::SystemCache::clean_dcache_by_range(&padded_file, sizeof(padded_file));
+
 		return {
-			.message_type = FatFsOpMessage,
-			.fatfs_req_id = unique_id(),
-			.fatfs_op = FatFsOp::Open,
-			.fil = fil,
+			.message_type = Open,
+			.path = filename,
+			.fil = &padded_file.data,
 			.mode = read_mode,
 		};
 	}
 
-	IntercoreModuleFSMessage make_seek_message(FIL *fil, uint64_t offset) {
+	static IntercoreModuleFSMessage make_seek_message(FIL *fil, uint64_t offset) {
 		return {
-			.message_type = FatFsOpMessage,
-			.fatfs_req_id = unique_id(),
-			.fatfs_op = FatFsOp::Seek,
+			.message_type = Seek,
 			.fil = fil,
 			.file_offset = offset,
 		};
 	}
 
-	IntercoreModuleFSMessage make_read_message(FIL *fil, std::span<char> buffer) {
+	static IntercoreModuleFSMessage make_read_message(FIL *fil, std::span<char> buffer) {
 		return {
-			.message_type = FatFsOpMessage,
+			.message_type = Read,
 			.buffer = buffer,
-			.fatfs_req_id = unique_id(),
-			.fatfs_op = FatFsOp::Read,
 			.fil = fil,
 		};
 	}
 
-	// seek_message
-	// read_message
-
 	std::optional<IntercoreModuleFSMessage> get_response_or_timeout(IntercoreModuleFSMessage message,
 																	uint32_t timeout = 3000) {
-		auto start = HAL_GetTick();
-		uint32_t msg_id{};
+		auto request_type = message.message_type;
 
-		while (true) {
-			if (auto id = send(message); id) {
-				msg_id = *id;
-				break;
-			}
+		auto start = HAL_GetTick();
+
+		while (!send(message)) {
 
 			if (HAL_GetTick() - start > 3000) {
 				pr_dbg("Sending message timed out\n");
@@ -101,13 +76,14 @@ public:
 		start = HAL_GetTick();
 
 		while (true) {
-			if (auto msg = get_message(); msg.message_type == FatFsOpMessage) {
+			if (auto msg = get_message(); msg.message_type != None) {
+				if (msg.message_type == request_type) {
 
-				if (msg.fatfs_req_id == msg_id) {
+					mdrivlib::SystemCache::invalidate_dcache_by_range(&padded_file, sizeof(padded_file));
 					return msg;
 
 				} else {
-					pr_dbg("Got unexpected id (%u vs %u)\n", msg.fatfs_req_id, msg_id);
+					pr_dbg("Got unexpected response messsage type (%u vs %u)\n", msg.message_type, request_type);
 					return {};
 				}
 			}
@@ -121,21 +97,33 @@ public:
 		return {};
 	}
 
-	IntercoreModuleFSMessage get_message() {
+	static uint32_t core() {
+		return __get_MPIDR() & 0b1;
+	}
+
+	static bool send(IntercoreModuleFSMessage const &message) {
+		if (core() == 1)
+			return comm_core1.send_message(message);
+		else
+			return comm_core0.send_message(message);
+	}
+
+	static IntercoreModuleFSMessage get_message() {
 		if (core() == 1)
 			return comm_core1.get_new_message();
 		else
 			return comm_core0.get_new_message();
 	}
 
+	// Put these in separate place? They are used by FS, and hidden via pImpl
 	std::string root;
 	std::string cwd;
 
 	PaddedAligned<FIL, 64> padded_file;
+	PaddedAligned<DIR, 64> padded_dir;
+	//buffer?
 
 private:
-	uint32_t last_uid = 999;
-
 	static constexpr uint32_t IPCC_ChanCore0 = 2;
 	static constexpr uint32_t IPCC_ChanCore1 = 3;
 
