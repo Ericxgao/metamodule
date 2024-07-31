@@ -2,13 +2,19 @@
 #include "console/pr_dbg.hh"
 #include "core_intercom/intercore_modulefs_message.hh"
 #include "drivers/inter_core_comm.hh"
-#include "static_buffers.hh"
 #include "util/padded_aligned.hh"
-
+#include <optional>
 #include <string_view>
+#include "fs_access_impl.hh"
 
 namespace MetaModule
 {
+
+namespace StaticBuffers
+{
+extern IntercoreModuleFSMessage icc_module_fs_message_core0;
+extern IntercoreModuleFSMessage icc_module_fs_message_core1;
+} // namespace StaticBuffers
 
 using enum IntercoreModuleFSMessage::MessageType;
 using FatFsOp = IntercoreModuleFSMessage::FatFsOp;
@@ -68,7 +74,7 @@ public:
 	std::optional<uint32_t> request_open_file(FIL *fil, std::string_view filename, uint8_t read_mode) {
 		uint32_t id = unique_id();
 		IntercoreModuleFSMessage message{
-			.message_type = NumRequests, //FatFsOpMessage,
+			.message_type = FatFsOpMessage,
 			.fatfs_req_id = id,
 			.fatfs_op = FatFsOp::Open,
 			.fil = fil,
