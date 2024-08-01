@@ -57,7 +57,10 @@ public:
 	}
 
 	void set_param(int param_id, float val) override {
-		if (chanL.set_param(param_id, val))
+		if (param_id == CoreHelper<Info>::param_index<AltParamStereoMode>())
+			settings.stereo_mode = val < 0.5;
+
+		else if (chanL.set_param(param_id, val))
 			return;
 		else
 			chanR.set_param(param_id, val);
