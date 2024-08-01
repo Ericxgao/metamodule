@@ -74,6 +74,7 @@ public:
 
 	FRESULT send_open_message(FIL *fp, std::string_view path, BYTE mode) {
 		auto msg = IntercoreModuleFS::Open{
+			.fil = *fp,
 			.path = StaticString<255>{path},
 			.access_mode = mode,
 		};
