@@ -265,8 +265,8 @@ FRESULT FS::f_mkdir(const TCHAR *path) {
 // WRITING
 
 FRESULT FS::f_write(FIL *fp, const void *buff, UINT btw, UINT *bw) {
-	fs_trace("f_write(%p)\n", fp);
 	if (write_access) {
+		fs_trace("f_write(%p, ...)\n", fp);
 	}
 	return FR_INT_ERR;
 }
@@ -291,8 +291,8 @@ int FS::f_putc(TCHAR c, FIL *fp) {
 }
 
 int FS::f_puts(const TCHAR *str, FIL *fp) {
-	fs_trace("f_puts(\"%s\", %p)\n", str, fp);
 	if (write_access) {
+		fs_trace("f_puts(\"%s\", %p)\n", str, fp);
 	}
 	return FR_INT_ERR;
 }
