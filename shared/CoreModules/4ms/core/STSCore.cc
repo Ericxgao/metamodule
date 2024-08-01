@@ -107,7 +107,7 @@ private:
 	SamplerKit::Sdcard sd{"1:/"};
 	SamplerKit::SampleList samples;
 	SamplerKit::BankManager banks{samples};
-	SamplerKit::UserSettings settings;
+	SamplerKit::UserSettings settings{}; //TODO: load from file
 	SamplerKit::CalibrationStorage cal_storage;
 
 	float tm = 0;
