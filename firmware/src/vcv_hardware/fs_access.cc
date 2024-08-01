@@ -42,6 +42,9 @@ FS::~FS() = default;
 FRESULT FS::f_open(FIL *fp, const TCHAR *path, BYTE mode) {
 	auto fullpath = impl->full_path(path);
 
+	if (!write_access)
+		mode &= ~(FA_WRITE | FA_CREATE_NEW | FA_CREATE_ALWAYS | FA_OPEN_APPEND);
+
 	fs_trace("f_open(%p, \"%s\", %d)\n", fp, fullpath.c_str(), mode);
 
 	auto msg = IntercoreModuleFS::Open{
