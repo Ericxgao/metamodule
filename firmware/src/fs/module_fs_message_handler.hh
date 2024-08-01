@@ -88,19 +88,19 @@ struct ModuleFSMessageHandler {
 				[](IntercoreModuleFS::OpenDir &msg) {
 					msg.res = f_opendir(&msg.dir, msg.path);
 					pr_trace("M4: f_opendir(%p, %s) -> %d\n", &msg.dir, msg.path, msg.res);
-					return false;
+					return true;
 				},
 
 				[](IntercoreModuleFS::CloseDir &msg) {
 					msg.res = f_closedir(&msg.dir);
 					pr_trace("M4: f_closedir(%p) -> %d\n", &msg.dir, msg.res);
-					return false;
+					return true;
 				},
 
 				[](IntercoreModuleFS::ReadDir &msg) {
 					msg.res = f_readdir(&msg.dir, &msg.info);
 					pr_trace("M4: f_readdir(%p, ->{name=%s}) -> %d\n", &msg.dir, msg.info.fname, msg.res);
-					return false;
+					return true;
 				},
 
 				[](IntercoreModuleFS::FindFirst &msg) {
@@ -111,14 +111,30 @@ struct ModuleFSMessageHandler {
 							 msg.path.data(),
 							 msg.pattern.data(),
 							 msg.res);
-					return false;
+					return true;
 				},
 
 				[](IntercoreModuleFS::FindNext &msg) {
 					msg.res = f_findnext(&msg.dir, &msg.info);
 					pr_trace("M4: f_findnext(%p, ->{name=%s}, %s, %s) -> %d\n", &msg.dir, msg.info.fname, msg.res);
-					return false;
+					return true;
 				},
+
+				[](IntercoreModuleFS::MkDir &msg) {
+					msg.res = f_mkdir(msg.path);
+					pr_trace("M4: f_mkdir(%s) -> %d\n", msg.path, msg.res);
+					return true;
+				},
+
+				//TODO:
+				//Write
+				//Sync
+				//Trunc
+				//Puts
+				//Unlink
+				//Rename
+				//UTime
+				//Expand
 
 			},
 			message);
