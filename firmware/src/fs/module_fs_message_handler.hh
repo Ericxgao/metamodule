@@ -38,9 +38,17 @@ struct ModuleFSMessageHandler {
 			overloaded{
 				[](auto &msg) { return false; },
 
+				// READING:
+
 				[](IntercoreModuleFS::Open &msg) {
 					msg.res = f_open(&msg.fil, msg.path.c_str(), msg.access_mode);
 					pr_trace("M4: f_open(%p, %s, %d) -> %d\n", &msg.fil, msg.path.c_str(), msg.access_mode, msg.res);
+					return true;
+				},
+
+				[](IntercoreModuleFS::Close &msg) {
+					msg.res = f_close(&msg.fil);
+					pr_trace("M4: f_close(%p) -> %d\n", msg.fil, msg.res);
 					return true;
 				},
 
@@ -64,15 +72,8 @@ struct ModuleFSMessageHandler {
 				},
 
 				[](IntercoreModuleFS::GetS &msg) {
-					auto txt = f_gets(msg.buffer.data(), (int)msg.buffer.size(), &msg.fil);
-					msg.res = txt == nullptr ? FR_INT_ERR : FR_OK;
-					pr_trace("M4: f_gets(%p, %zu, %p) -> %p\n", msg.buffer.data(), msg.buffer.size(), &msg.fil, txt);
-					return true;
-				},
-
-				[](IntercoreModuleFS::Close &msg) {
-					msg.res = f_close(&msg.fil);
-					pr_trace("M4: f_close(%p) -> %d\n", msg.fil, msg.res);
+					msg.res = f_gets(msg.buffer.data(), (int)msg.buffer.size(), &msg.fil);
+					pr_trace("M4: f_gets(%p, %u, %p)-> %p\n", msg.buffer.data(), msg.buffer.size(), &msg.fil, msg.res);
 					return true;
 				},
 
@@ -82,11 +83,43 @@ struct ModuleFSMessageHandler {
 					return true;
 				},
 
-				[](IntercoreModuleFS::OpenDir &msg) { return false; },
+				// DIRS
 
-				[](IntercoreModuleFS::CloseDir &msg) { return false; },
+				[](IntercoreModuleFS::OpenDir &msg) {
+					msg.res = f_opendir(&msg.dir, msg.path);
+					pr_trace("M4: f_opendir(%p, %s) -> %d\n", &msg.dir, msg.path, msg.res);
+					return false;
+				},
 
-				[](IntercoreModuleFS::ReadDir &msg) { return false; },
+				[](IntercoreModuleFS::CloseDir &msg) {
+					msg.res = f_closedir(&msg.dir);
+					pr_trace("M4: f_closedir(%p) -> %d\n", &msg.dir, msg.res);
+					return false;
+				},
+
+				[](IntercoreModuleFS::ReadDir &msg) {
+					msg.res = f_readdir(&msg.dir, &msg.info);
+					pr_trace("M4: f_readdir(%p, ->{name=%s}) -> %d\n", &msg.dir, msg.info.fname, msg.res);
+					return false;
+				},
+
+				[](IntercoreModuleFS::FindFirst &msg) {
+					msg.res = f_findfirst(&msg.dir, &msg.info, msg.path.data(), msg.pattern.data());
+					pr_trace("M4: f_findfirst(%p, ->{name=%s}, %s, %s) -> %d\n",
+							 &msg.dir,
+							 msg.info.fname,
+							 msg.path.data(),
+							 msg.pattern.data(),
+							 msg.res);
+					return false;
+				},
+
+				[](IntercoreModuleFS::FindNext &msg) {
+					msg.res = f_findnext(&msg.dir, &msg.info);
+					pr_trace("M4: f_findnext(%p, ->{name=%s}, %s, %s) -> %d\n", &msg.dir, msg.info.fname, msg.res);
+					return false;
+				},
+
 			},
 			message);
 
