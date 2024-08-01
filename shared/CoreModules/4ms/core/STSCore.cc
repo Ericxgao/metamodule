@@ -165,7 +165,7 @@ private:
 		.SampleKnob = CoreHelper<STSInfo>::param_index<SampleRKnob>(),
 		.StartPosKnob = CoreHelper<STSInfo>::param_index<StartPos_RKnob>(),
 		.LengthKnob = CoreHelper<STSInfo>::param_index<LengthRKnob>(),
-		.PlayButton = CoreHelper<STSInfo>::param_index<PlayLButton>(),
+		.PlayButton = CoreHelper<STSInfo>::param_index<PlayRButton>(),
 		.BankButton = CoreHelper<STSInfo>::param_index<BankRButton>(),
 		.ReverseButton = CoreHelper<STSInfo>::param_index<ReverseRButton>(),
 		.PlayTrigIn = CoreHelper<STSInfo>::input_index<PlayTrigRIn>(),
