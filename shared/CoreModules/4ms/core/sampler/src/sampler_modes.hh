@@ -179,7 +179,7 @@ public:
 		// Force Reload flag is set (Edit mode, or loaded new index)
 		// File is empty (never been read since entering this bank)
 		// Sample File Changed flag is set (new file was recorded into this slot)
-		if (flags.take(Flag::ForceFileReload) || /*(fil[samplenum].obj.fs == 0) ||*/
+		if (flags.take(Flag::ForceFileReload) || (state.fil[samplenum].obj.fs == 0) ||
 			(s_sample->file_status == FileStatus::NewFile))
 		{
 			res = reload_sample_file(&state.fil[samplenum], s_sample, sd);
@@ -530,8 +530,9 @@ private:
 
 		for (samplenum = 0; samplenum < NUM_SAMPLES_PER_BANK; samplenum++) {
 			res = sd.f_close(&state.fil[samplenum]);
-			if (res != FR_OK)
-				state.fil[samplenum].obj.fs = 0;
+			// if (res != FR_OK)
+			state.fil[samplenum].obj.fs = 0;
+			state.fil[samplenum].cltbl = nullptr;
 
 			state.is_buffered_to_file_end[samplenum] = 0;
 
