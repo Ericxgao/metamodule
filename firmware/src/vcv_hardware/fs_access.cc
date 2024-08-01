@@ -17,6 +17,12 @@ extern IntercoreModuleFS::Message icc_module_fs_message_core0;
 extern IntercoreModuleFS::Message icc_module_fs_message_core1;
 } // namespace StaticBuffers
 
+static constexpr bool print_fs_calls = true;
+static inline void fs_trace(auto... args) {
+	if constexpr (print_fs_calls)
+		printf(args...);
+}
+
 FS::FS(std::string_view root)
 	: impl{new Impl(root)} {
 }
@@ -25,18 +31,18 @@ FS::~FS() = default;
 
 FRESULT FS::f_open(FIL *fp, const TCHAR *path, BYTE mode) {
 	std::string fullpath = impl->root + path;
-	pr_dbg("f_open (%p, \"%s\", %d)\n", fp, fullpath.c_str(), mode);
+	fs_trace("f_open (%p, \"%s\", %d)\n", fp, fullpath.c_str(), mode);
 
 	return impl->send_open_message(fp, fullpath, mode);
 }
 
 FRESULT FS::f_close(FIL *fp) {
-	pr_dbg("f_close(%p)\n", fp);
+	fs_trace("f_close(%p)\n", fp);
 	return impl->send_close_message(fp);
 }
 
 FRESULT FS::f_read(FIL *fp, void *buff, UINT btr, UINT *br) {
-	pr_dbg("f_read(%p, %p, %u, ...)\n", fp, buff, btr);
+	fs_trace("f_read(%p, %p, %u, ...)\n", fp, buff, btr);
 	return impl->send_read_message(fp, (char *)buff, btr, br);
 }
 
@@ -44,56 +50,57 @@ TCHAR *FS::f_gets(TCHAR *buff, int len, FIL *fp) {
 	if (len < 0) {
 		return nullptr;
 	}
-	pr_dbg("f_gets(%p, %d, %p)\n", buff, len, fp);
+	fs_trace("f_gets(%p, %d, %p)\n", buff, len, fp);
 	return impl->send_gets_message(fp, std::span<char>(buff, (size_t)len));
 }
 
 FRESULT FS::f_lseek(FIL *fp, uint64_t ofs) {
-	pr_dbg("f_lseek(%p, %lld)\n", fp, ofs);
+	fs_trace("f_lseek(%p, %lld)\n", fp, ofs);
 	return impl->send_seek_message(fp, ofs);
 }
 
 FRESULT FS::f_write(FIL *fp, const void *buff, UINT btw, UINT *bw) {
-	pr_dbg("f_write %p\n", fp);
+	fs_trace("f_write %p\n", fp);
 	return FR_INT_ERR;
 }
 
 FRESULT FS::f_truncate(FIL *fp) {
+	fs_trace("f_truncate %p\n", fp);
 	return FR_INT_ERR;
 }
 
 FRESULT FS::f_sync(FIL *fp) {
-	pr_dbg("f_sync %p\n", fp);
+	fs_trace("f_sync %p\n", fp);
 	return FR_INT_ERR;
 }
 
 FRESULT FS::f_opendir(DIR *dp, const TCHAR *path) {
-	pr_dbg("f_opendir %p %s\n", dp, path);
+	fs_trace("f_opendir %p %s\n", dp, path);
 	return FR_INT_ERR;
 }
 
 FRESULT FS::f_closedir(DIR *dp) {
-	pr_dbg("f_closedir %p\n", dp);
+	fs_trace("f_closedir %p\n", dp);
 	return FR_INT_ERR;
 }
 
 FRESULT FS::f_readdir(DIR *dp, FILINFO *fno) {
-	pr_dbg("f_readdir %p\n", dp);
+	fs_trace("f_readdir %p\n", dp);
 	return FR_INT_ERR;
 }
 
 FRESULT FS::f_findfirst(DIR *dp, FILINFO *fno, const TCHAR *path, const TCHAR *pattern) {
-	pr_dbg("f_findfirst %p %s %s\n", dp, path, pattern);
+	fs_trace("f_findfirst %p %s %s\n", dp, path, pattern);
 	return FR_INT_ERR;
 }
 
 FRESULT FS::f_findnext(DIR *dp, FILINFO *fno) {
-	pr_dbg("f_findnext %p\n", dp);
+	fs_trace("f_findnext %p\n", dp);
 	return FR_INT_ERR;
 }
 
 FRESULT FS::f_mkdir(const TCHAR *path) {
-	pr_dbg("f_mkdir %s\n", path);
+	fs_trace("f_mkdir %s\n", path);
 	return FR_INT_ERR;
 }
 
@@ -106,7 +113,7 @@ FRESULT FS::f_rename(const TCHAR *path_old, const TCHAR *path_new) {
 }
 
 FRESULT FS::f_stat(const TCHAR *path, FILINFO *fno) {
-	pr_dbg("f_stat %s\n", path);
+	fs_trace("f_stat %s\n", path);
 	return FR_INT_ERR;
 }
 
@@ -115,7 +122,7 @@ FRESULT FS::f_utime(const TCHAR *path, const FILINFO *fno) {
 }
 
 FRESULT FS::f_chdir(const TCHAR *path) {
-	pr_dbg("f_chdir %s\n", path);
+	fs_trace("f_chdir %s\n", path);
 	return FR_INT_ERR;
 }
 

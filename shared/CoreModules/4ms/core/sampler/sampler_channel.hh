@@ -172,6 +172,11 @@ private:
 
 	SamplerKit::Sampler sampler;
 
+	// Do we need these? or just pass to params
+	// SamplerKit::Sdcard &sd;
+	// SamplerKit::BankManager &banks;
+	// SamplerKit::UserSettings &settings;
+
 	static constexpr float GateThreshold = 1.0f;
 
 	float sample_rate = 48000;

@@ -40,13 +40,13 @@ struct ModuleFSMessageHandler {
 
 				[](IntercoreModuleFS::Open &msg) {
 					msg.res = f_open(&msg.fil, msg.path.c_str(), msg.access_mode);
-					pr_dbg("M4: f_open(%p, %s, %d) -> %d\n", &msg.fil, msg.path.c_str(), msg.access_mode, msg.res);
+					pr_trace("M4: f_open(%p, %s, %d) -> %d\n", &msg.fil, msg.path.c_str(), msg.access_mode, msg.res);
 					return true;
 				},
 
 				[](IntercoreModuleFS::Seek &msg) {
 					msg.res = f_lseek(&msg.fil, msg.file_offset);
-					pr_dbg("M4: f_lseek(%p, %llu) -> %d\n", &msg.fil, msg.file_offset, msg.res);
+					pr_trace("M4: f_lseek(%p, %llu) -> %d\n", &msg.fil, msg.file_offset, msg.res);
 					return true;
 				},
 
@@ -54,29 +54,39 @@ struct ModuleFSMessageHandler {
 					UINT bytes_read = 0;
 					msg.res = f_read(&msg.fil, msg.buffer.data(), msg.buffer.size(), &bytes_read);
 					msg.bytes_read = bytes_read;
-					pr_dbg("M4: f_read(%p, %p, %zu, -> %u) -> %d\n",
-						   &msg.fil,
-						   msg.buffer.data(),
-						   msg.buffer.size(),
-						   bytes_read,
-						   msg.res);
+					pr_trace("M4: f_read(%p, %p, %zu, -> %u) -> %d\n",
+							 &msg.fil,
+							 msg.buffer.data(),
+							 msg.buffer.size(),
+							 bytes_read,
+							 msg.res);
 					return true;
 				},
 
 				[](IntercoreModuleFS::GetS &msg) {
 					auto txt = f_gets(msg.buffer.data(), (int)msg.buffer.size(), &msg.fil);
-
 					msg.res = txt == nullptr ? FR_INT_ERR : FR_OK;
-
-					pr_dbg("M4: f_gets(%p, %zu, %p) -> %p\n", msg.buffer.data(), msg.buffer.size(), &msg.fil, txt);
+					pr_trace("M4: f_gets(%p, %zu, %p) -> %p\n", msg.buffer.data(), msg.buffer.size(), &msg.fil, txt);
 					return true;
 				},
 
 				[](IntercoreModuleFS::Close &msg) {
 					msg.res = f_close(&msg.fil);
-					pr_dbg("M4: f_close(%p) -> %d\n", msg.fil, msg.res);
+					pr_trace("M4: f_close(%p) -> %d\n", msg.fil, msg.res);
 					return true;
 				},
+
+				[](IntercoreModuleFS::Stat &msg) {
+					msg.res = f_stat(msg.path, &msg.info);
+					pr_trace("M4: f_stat(%s, ->{sz=%llu}) -> %d\n", msg.path, msg.info.fsize, msg.res);
+					return true;
+				},
+
+				[](IntercoreModuleFS::OpenDir &msg) { return false; },
+
+				[](IntercoreModuleFS::CloseDir &msg) { return false; },
+
+				[](IntercoreModuleFS::ReadDir &msg) { return false; },
 			},
 			message);
 
