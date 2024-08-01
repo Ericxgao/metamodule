@@ -8,6 +8,7 @@
 #include "sampler/src/sts_filesystem.hh"
 #include "sdcard.hh"
 #include <atomic>
+#include <chrono>
 
 namespace MetaModule
 {
@@ -26,7 +27,7 @@ private:
 			index_is_loaded = true;
 		}
 
-		if (tm - last_tm >= 1.0f) {
+		if (tm - last_tm >= 1) {
 			last_tm = tm;
 
 			chanL.fs_process(tm);
@@ -38,12 +39,8 @@ private:
 	}};
 
 public:
-	STSCore()
-		: last_tm{0} {
-	}
-
 	void update() override {
-		tm += ms_per_update;
+		tm = std::chrono::steady_clock::now().time_since_epoch().count() / 1'000'000LL;
 
 		if (index_is_loaded) {
 			chanL.update(tm);
@@ -122,8 +119,8 @@ private:
 	SamplerKit::UserSettings settings{}; //TODO: load from file
 	SamplerKit::CalibrationStorage cal_storage;
 
-	float tm = 0;
-	float last_tm = 0;
+	uint32_t tm = 0;
+	uint32_t last_tm = 0;
 	float ms_per_update = 1000.f / 48000.f;
 	bool started_fs_thread = false;
 

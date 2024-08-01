@@ -37,10 +37,10 @@ public:
 		sampler.update_fs_thread(tm);
 	}
 
-	void update(float tm) {
+	void update(uint32_t tm) {
 		if (++out_buf_pos >= outblock.size()) {
 			out_buf_pos = 0;
-			params.update(uint32_t(tm));
+			params.update(tm);
 			// 	sampler.recorder.record_audio_to_buffer(inblock);
 			sampler.audio.update(inblock, outblock);
 		}
