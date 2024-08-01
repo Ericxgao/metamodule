@@ -42,6 +42,14 @@ public:
 	uint32_t sample_rate = 48000;
 	uint32_t led_throttle_ctr = 0;
 
+	Controls() {
+		play_button.reset();
+		rev_button.reset();
+		bank_button.reset();
+		play_jack.reset();
+		rev_jack.reset();
+	}
+
 	uint16_t read_pot(PotAdcElement adcnum) {
 		return pots[adcnum];
 	}

@@ -166,9 +166,9 @@ public:
 private:
 	STSChanMapping mapping;
 
-	SamplerKit::Controls controls;
+	SamplerKit::Controls controls{};
 	SamplerKit::Params params;
-	SamplerKit::Flags flags;
+	SamplerKit::Flags flags{};
 
 	SamplerKit::Sampler sampler;
 
