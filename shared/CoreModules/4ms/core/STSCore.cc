@@ -7,6 +7,7 @@
 #include "sampler/sampler_channel.hh"
 #include "sampler/src/sts_filesystem.hh"
 #include "sdcard.hh"
+#include <atomic>
 
 namespace MetaModule
 {
@@ -18,25 +19,27 @@ public:
 	using enum Info::Elem;
 
 private:
-	// Run this in the low-pri thread:
+	// This runs in the low-pri thread:
 	AsyncThread fs_thread{[this]() {
+		if (!index_is_loaded) {
+			index_loader.load_all_banks();
+			index_is_loaded = true;
+		}
+
 		if (tm - last_tm >= 1.0f) {
-			// DebugPin1High();
 			last_tm = tm;
+
 			chanL.fs_process(tm);
 			chanR.fs_process(tm);
-			// DebugPin1Low();
+
+			// For now, disable saving the index
 			// index_loader.handle_events();
 		}
 	}};
 
 public:
-	STSCore() {
-		// sd.reload();
-		// TODO: load index
-		SamplerKit::Flags flags;
-		SamplerKit::SampleIndexLoader index_loader{sd, samples, banks, flags};
-		index_loader.load_all_banks();
+	STSCore()
+		: last_tm{0} {
 	}
 
 	void update() override {
@@ -92,6 +95,9 @@ public:
 
 		else if (auto found = chanR.get_led_brightness(led_id); found.has_value())
 			return *found;
+
+		else if (led_id == CoreHelper<Info>::first_light_index<BusyLight>())
+			return index_is_loaded ? 0 : 1.f;
 
 		else
 			return 0.f;
@@ -180,6 +186,10 @@ private:
 
 	SamplerChannel chanL{MappingL, sd, banks, settings, cal_storage};
 	SamplerChannel chanR{MappingR, sd, banks, settings, cal_storage};
+
+	SamplerKit::Flags index_flags;
+	std::atomic<bool> index_is_loaded = false;
+	SamplerKit::SampleIndexLoader index_loader{sd, samples, banks, index_flags};
 };
 
 } // namespace MetaModule
