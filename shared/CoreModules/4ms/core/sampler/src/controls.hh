@@ -1,6 +1,7 @@
 #pragma once
 #include "elements.hh"
 #include "sampler/mocks/mocks.hh"
+#include "sampler/src/audio_stream_conf.hh"
 #include <cmath>
 
 namespace SamplerKit
@@ -63,7 +64,7 @@ public:
 		play_jack.update();
 		rev_jack.update();
 
-		uint32_t led_throttle = sample_rate / LEDUpdateRateHz;
+		uint32_t led_throttle = sample_rate / AudioStreamConf::BlockSize / LEDUpdateRateHz;
 		if (led_throttle_ctr++ > led_throttle) {
 			led_throttle_ctr = 0;
 			play_led.update_animation();
