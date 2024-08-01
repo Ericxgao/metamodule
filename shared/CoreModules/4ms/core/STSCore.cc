@@ -44,8 +44,14 @@ public:
 
 	void update() override {
 		tm += ms_per_update;
-		chanL.update(tm);
-		chanR.update(tm);
+
+		if (index_is_loaded) {
+			chanL.update(tm);
+			chanR.update(tm);
+		} else {
+			//Leds leds{index_flags, controls};
+			//leds.animate_startup()
+		}
 
 		if (!started_fs_thread && id > 0) {
 			fs_thread.start(id);
