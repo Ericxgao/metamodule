@@ -74,16 +74,26 @@ public:
 	}
 
 	float get_output(int output_id) const override {
+		//TODO: if chanR is not patched, feed mono to chan L
+		if (settings.stereo_mode) {
+		}
+
 		if (output_id == OutL) {
-			return chanL.get_output(OutL).value_or(0) + chanR.get_output(OutL).value_or(0);
+			if (settings.stereo_mode)
+				return 0.5f * (chanL.get_output(OutL).value_or(0.f) + chanR.get_output(OutL).value_or(0.f));
+			else
+				return chanL.get_output(OutL).value_or(0.f);
 
 		} else if (output_id == OutR) {
-			return chanL.get_output(OutR).value_or(0) + chanR.get_output(OutR).value_or(0);
+			if (settings.stereo_mode)
+				return 0.5f * (chanL.get_output(OutR).value_or(0.f) + chanR.get_output(OutR).value_or(0.f));
+			else
+				return chanR.get_output(OutL).value_or(0.f);
 
-		} else if (auto found = chanL.get_output(output_id); found.has_value()) {
+		} else if (auto found = chanL.get_output(output_id)) {
 			return *found;
 
-		} else if (auto found = chanR.get_output(output_id); found.has_value()) {
+		} else if (auto found = chanR.get_output(output_id)) {
 			return *found;
 		}
 		return 0.f;

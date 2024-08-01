@@ -121,11 +121,13 @@ public:
 
 	std::optional<float> get_output(unsigned output_id) const {
 		static constexpr int32_t kMaxValue = MathTools::ipow(2, 23);
+		static constexpr float kMaxValueVolts = kMaxValue / 10.f;
+
 		if (output_id == mapping.OutL)
-			return (float)outblock[out_buf_pos].chan[0] / (float)kMaxValue;
+			return (float)outblock[out_buf_pos].chan[0] / kMaxValueVolts;
 
 		else if (output_id == mapping.OutR)
-			return (float)outblock[out_buf_pos].chan[1] / (float)kMaxValue;
+			return (float)outblock[out_buf_pos].chan[1] / kMaxValueVolts;
 
 		else if (output_id == mapping.EndOut)
 			return controls.end_out.sideload_get() ? 8.f : 0.f;

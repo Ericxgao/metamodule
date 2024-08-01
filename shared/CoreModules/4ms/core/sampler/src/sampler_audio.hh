@@ -54,22 +54,9 @@ public:
 
 		play_audio_from_buffer(outL, outR);
 
-		if (params.settings.stereo_mode) {
-			// Stereo mode
-			for (auto [out, L, R] : zip(outblock, outL, outR)) {
-				out.chan[0] = MathTools::signed_saturate(L, 24);
-				out.chan[1] = MathTools::signed_saturate(R, 24);
-			}
-			return;
-		}
-
-		{
-			// Mono mode
-			for (auto [out, L, R] : zip(outblock, outL, outR)) {
-				// Average is already done in play_audio_from_buffer(), and put into outL
-				out.chan[0] = MathTools::signed_saturate(L, 24);
-				out.chan[1] = 0;
-			}
+		for (auto [out, L, R] : zip(outblock, outL, outR)) {
+			out.chan[0] = MathTools::signed_saturate(L, 24);
+			out.chan[1] = MathTools::signed_saturate(R, 24);
 		}
 	}
 
@@ -122,6 +109,9 @@ public:
 				resample_read<WavChan::Average>(rs, &play_buff[samplenum], outL, params.reverse, flush, resample_state);
 			else
 				resample_read<WavChan::Mono>(rs, &play_buff[samplenum], outL, params.reverse, flush, resample_state);
+
+			for (auto &out : outR)
+				out = 0;
 		}
 
 		// TODO: if writing a flag gets expensive, then we could refactor this
