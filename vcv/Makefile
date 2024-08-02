@@ -92,7 +92,6 @@ INCLUDES += -I$(SHARED)/CoreModules/4ms/core/peg-common/mocks
 # STS
 INCLUDES += -I$(SHARED)/CoreModules/4ms/core/sampler/src
 INCLUDES += -I$(SHARED)/CoreModules/4ms/core/sampler/mocks
-INCLUDES += -Isrc/fs
 SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/mocks/calibration_storage.cc
 SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/mocks/time.cc
 SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/bank.cc
@@ -105,6 +104,13 @@ SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/bank.cc
 SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/bank_util.cc
 SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/wavefmt.cc
 FLAGS += -DMETAMODULE
+
+# FS Access
+INCLUDES += -Isrc/fs
+SOURCES += src/fs/fs_access.cc
+
+# Async
+SOURCES += src/async/async_thread.cc
 
 # FLAGS will be passed to both the C and C++ compiler
 FLAGS += -std=c++2a 
@@ -123,13 +129,13 @@ LDFLAGS +=
 DISTRIBUTABLES += res
 DISTRIBUTABLES += $(wildcard LICENSE*)
 
-all: debug
+# all: debug
 
-debug:
-	$(CXX) --version
+# debug:
+# 	$(CXX) --version
 
-clean:
-	$(CXX) --version
+# clean:
+# 	$(CXX) --version
 
 
 # Include the Rack plugin Makefile framework
