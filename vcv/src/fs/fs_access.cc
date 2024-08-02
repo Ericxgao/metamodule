@@ -15,8 +15,6 @@ namespace MetaModule
 static constexpr bool print_fs_calls = true;
 static constexpr bool write_access = false;
 
-static const char SAMPLE_DIR_FILTERS[] = "Sample Index (.dat):dat"; //"WAV (.wav):wav,WAV;Raw:f32,i8,i16,i24,i32,*";
-
 static inline void fs_trace(const char *str) {
 	if constexpr (print_fs_calls)
 		printf("%s", str);
@@ -53,8 +51,8 @@ bool FS::find_valid_root(std::string_view path) {
 
 		File file;
 		auto res = f_open(&file, path.data(), FA_READ);
-		auto res2 = f_close(&file);
-		if (res == FR_OK && res2 == FR_OK) {
+		f_close(&file);
+		if (res == FR_OK) {
 			printf("Found valid root %s\n", root.data());
 			//keep the root, restore cwd
 			impl->cwd = t_cwd;
@@ -90,7 +88,7 @@ FRESULT FS::f_open(File *fp, const char *path, uint8_t mode) {
 							mode == (FA_CREATE_NEW | FA_WRITE | FA_READ)	? "w+x" :
 																			  "";
 
-	fp->fil = std::fopen(path, posixmode.c_str());
+	fp->fil = std::fopen(fullpath.c_str(), "rb"); //posixmode.c_str());
 
 	if (fp->fil == nullptr)
 		return FR_NO_FILE;
@@ -109,65 +107,34 @@ FRESULT FS::f_close(File *fil) {
 }
 
 FRESULT FS::f_lseek(File *fil, uint64_t offset) {
-	fs_trace("f_lseek(%p, %lld)\n", fil, offset);
+	if (offset == 18446744073709551595ULL) {
+		fs_trace("f_lseek request for cluster map, ignored\n");
+		return FR_OK;
+	}
 
-	// auto msg = IntercoreModuleFS::Seek{
-	// 	.fil = *fil,
-	// 	.file_offset = offset,
-	// };
+	fs_trace("f_lseek(%p, %llu)\n", fil, offset);
 
-	// if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Seek>(msg, 3000)) {
-	// 	*fil = response->fil; //copy File back
-	// 	return response->res;
-	// }
+	auto res = std::fseek(fil->fil, offset, SEEK_SET);
 
-	return FR_TIMEOUT;
+	return res == 0 ? FR_OK : FR_TIMEOUT;
 }
 
 FRESULT FS::f_read(File *fil, void *buff, unsigned bytes_to_read, unsigned *br) {
 	fs_trace("f_read(%p, %p, %u, ...)\n", fil, buff, bytes_to_read);
 
-	// if (bytes_to_read > impl->file_buffer.size()) {
-	// 	pr_err("Cannot f_read %d bytes\n", bytes_to_read);
-	// 	return FR_NOT_ENOUGH_CORE;
-	// }
+	auto bytes_read = std::fread(buff, 1, bytes_to_read, fil->fil);
+	*br = bytes_read;
 
-	// auto msg = IntercoreModuleFS::Read{
-	// 	.fil = *fil,
-	// 	.buffer = impl->file_buffer.subspan(0, bytes_to_read),
-	// };
-
-	// if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Read>(msg, 3000)) {
-	// 	*fil = response->fil;
-	// 	*br = response->bytes_read;
-	// 	std::copy(response->buffer.begin(), std::next(response->buffer.begin(), response->bytes_read), (char *)buff);
-
-	// 	return FR_OK;
-	// }
-	return FR_TIMEOUT;
+	if (bytes_read == 0 && bytes_to_read != 0)
+		return FR_NO_FILE;
+	else
+		return FR_OK;
 }
 
 char *FS::f_gets(char *buffer, int len, File *fil) {
 	fs_trace("f_gets(%p, %d, %p)\n", buffer, len, fil);
 
-	// if ((size_t)len > impl->file_buffer.size()) {
-	// 	pr_err("Cannot f_gets %d bytes\n", len);
-	// 	return nullptr;
-	// }
-
-	// auto msg = IntercoreModuleFS::GetS{
-	// 	.fil = *fil,
-	// 	.buffer = impl->file_buffer.subspan(0, len),
-	// };
-
-	// auto response = impl->get_response_or_timeout<IntercoreModuleFS::GetS>(msg, 3000);
-	// if (response) {
-	// 	*fil = response->fil;
-	// 	// copy buffer until we hit a \0
-	// 	std::strcpy(buffer, response->buffer.data());
-	// 	return msg.res;
-	// }
-	return nullptr;
+	return std::fgets(buffer, len, fil->fil);
 }
 
 FRESULT FS::f_stat(const char *path, Fileinfo *info) {
