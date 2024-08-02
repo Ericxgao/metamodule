@@ -49,6 +49,7 @@ add_subdirectory(${FWDIR}/vcv_plugin ${CMAKE_CURRENT_BINARY_DIR}/vcv_plugin)
  
 add_subdirectory(${FWDIR}/vcv_ports/ ${CMAKE_CURRENT_BINARY_DIR}/vcv_ports)
 target_compile_options(vcv_ports INTERFACE -Wno-double-promotion)
+target_include_directories(4msLibrary PRIVATE stubs/fs)
 
 # #################### Application ############################################
 
@@ -60,6 +61,8 @@ add_executable(
     src/main.cc 
     src/ui.cc
     stubs/random.cpp
+    stubs/async_thread.cc
+    stubs/fs/fs_access.cc
     ${FWDIR}/src/gui/elements/element_name.cc
     ${FWDIR}/src/gui/slsexport/ui_local.cc
     ${FWDIR}/src/fw_update/updater_proxy.cc
@@ -96,6 +99,7 @@ target_include_directories(
           ${FWDIR}/src/medium
           ${FWDIR}/lib/fatfs/source
           ${FWDIR}/src/fs/fatfs
+		  stubs/fs
             .
           )
 

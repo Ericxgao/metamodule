@@ -5,6 +5,11 @@
 #include "settings.hh"
 #include "ui.hh"
 
+namespace MetaModule
+{
+void start_module_threads();
+}
+
 int main(int argc, char *argv[]) {
 	MetaModuleSim::Settings settings;
 
@@ -25,6 +30,8 @@ int main(int argc, char *argv[]) {
 
 	audio_out.set_callback([&ui](auto playback_buffer) { ui.play_patch(playback_buffer); });
 	audio_out.unpause();
+
+	MetaModule::start_module_threads();
 
 	// Run until get Quit event
 	while (ui.update()) {
