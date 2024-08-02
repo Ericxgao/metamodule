@@ -92,6 +92,7 @@ INCLUDES += -I$(SHARED)/CoreModules/4ms/core/peg-common/mocks
 # STS
 INCLUDES += -I$(SHARED)/CoreModules/4ms/core/sampler/src
 INCLUDES += -I$(SHARED)/CoreModules/4ms/core/sampler/mocks
+INCLUDES += -Isrc/fs
 SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/mocks/calibration_storage.cc
 SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/mocks/time.cc
 SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/bank.cc
@@ -99,7 +100,7 @@ SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/sample_file.cc
 SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/sts_filesystem.cc
 SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/sts_sampleindex.cc
 SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/sample_header.cc
-SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/str_util.c
+SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/str_util.cc
 SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/bank.cc
 SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/bank_util.cc
 SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/wavefmt.cc
