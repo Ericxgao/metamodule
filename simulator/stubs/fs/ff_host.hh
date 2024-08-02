@@ -6,7 +6,7 @@ namespace MetaModule
 {
 
 struct File {
-	std::FILE fil{};
+	std::FILE *fil{};
 
 	File() {
 		reset();

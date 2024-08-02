@@ -1,6 +1,6 @@
 #include "CoreModules/fs_access.hh"
-#include "console/pr_dbg.hh"
 #include "fs/fs_access_impl.hh"
+#include <array>
 #include <cstdarg>
 #include <cstring>
 #include <string_view>
@@ -27,6 +27,41 @@ FS::FS(std::string_view root)
 
 FS::~FS() = default;
 
+// Valid Root
+
+// FIXME: needs to match command-line args
+std::array<std::string_view, 2> valid_roots{
+	"./patches/",
+	"../patches/",
+};
+
+bool FS::find_valid_root(std::string_view path) {
+	auto t_root = impl->root;
+	auto t_cwd = impl->cwd;
+
+	for (auto root : valid_roots) {
+		impl->root = root;
+		impl->cwd = "./";
+
+		File file;
+		auto res = f_open(&file, path.data(), FA_READ);
+		auto res2 = f_close(&file);
+		if (res == FR_OK && res2 == FR_OK) {
+			printf("Found valid root %s\n", root.data());
+			//keep the root, restore cwd
+			impl->cwd = t_cwd;
+			return true;
+		}
+	}
+
+	// no valid root found. restore previous values
+	impl->root = t_root;
+	impl->cwd = t_cwd;
+	printf("No valid root found\n");
+
+	return false;
+}
+
 // READING
 
 FRESULT FS::f_open(File *fp, const char *path, uint8_t mode) {
@@ -47,10 +82,9 @@ FRESULT FS::f_open(File *fp, const char *path, uint8_t mode) {
 							mode == (FA_CREATE_NEW | FA_WRITE | FA_READ)	? "w+x" :
 																			  "";
 
-	auto fil = std::fopen(path, posixmode.c_str());
-	fp = reinterpret_cast<File *>(fil);
+	fp->fil = std::fopen(path, posixmode.c_str());
 
-	if (fil == nullptr)
+	if (fp->fil == nullptr)
 		return FR_NO_FILE;
 	else
 		return FR_OK;
@@ -59,16 +93,11 @@ FRESULT FS::f_open(File *fp, const char *path, uint8_t mode) {
 FRESULT FS::f_close(File *fil) {
 	fs_trace("f_close(%p)\n", fil);
 
-	// auto msg = IntercoreModuleFS::Close{
-	// 	.fil = *fil,
-	// };
-
-	// if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Close>(msg, 3000)) {
-	// 	*fil = response->fil;
-	// 	return response->res;
-	// }
-
-	return FR_TIMEOUT;
+	auto res = std::fclose(fil->fil);
+	if (res == 0)
+		return FR_OK;
+	else
+		return FR_DISK_ERR;
 }
 
 FRESULT FS::f_lseek(File *fil, uint64_t offset) {
