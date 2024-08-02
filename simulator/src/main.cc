@@ -8,7 +8,8 @@
 namespace MetaModule
 {
 void start_module_threads();
-}
+void kill_module_threads();
+} // namespace MetaModule
 
 int main(int argc, char *argv[]) {
 	MetaModuleSim::Settings settings;
@@ -36,6 +37,8 @@ int main(int argc, char *argv[]) {
 	// Run until get Quit event
 	while (ui.update()) {
 	}
+
+	MetaModule::kill_module_threads();
 
 	lv_port_disp_deinit();
 	lv_deinit();

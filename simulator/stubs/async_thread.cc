@@ -18,6 +18,7 @@ struct Task {
 static std::array<Task, MAX_MODULES_IN_PATCH> tasks;
 
 std::thread task_runner;
+std::atomic<bool> kill_signal = false;
 
 } // namespace
 
@@ -28,11 +29,8 @@ AsyncThread::AsyncThread(Callback &&new_action)
 }
 
 void AsyncThread::start(unsigned module_id) {
-	printf("Start\n");
 	if (action && module_id > 0) {
-		printf("action && module_id\n");
 		if (module_id < tasks.size()) {
-			printf("module_id<\n");
 			id = module_id;
 			tasks[id].action = action;
 			tasks[id].enabled = true;
@@ -52,9 +50,10 @@ AsyncThread::~AsyncThread() {
 }
 
 void start_module_threads() {
+	kill_signal = false;
 	task_runner = std::thread([]() {
-		while (true) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		while (!kill_signal) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			for (auto &task : tasks) {
 				if (task.enabled) {
 					task.action();
@@ -65,8 +64,12 @@ void start_module_threads() {
 }
 
 void pause_module_threads() {
-	//TODO: how to pause a thread?
-	// We could cache the enabled fields, then set all enabled to false
+	kill_signal = true;
+}
+
+void kill_module_threads() {
+	kill_signal = true;
+	task_runner.join();
 }
 
 } // namespace MetaModule

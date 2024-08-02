@@ -102,4 +102,9 @@ void pause_module_threads(unsigned core_id = core()) {
 	task_runner.stop();
 }
 
+void kill_module_threads() {
+	async_task_core0.stop();
+	async_task_core1.stop();
+}
+
 } // namespace MetaModule
