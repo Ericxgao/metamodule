@@ -60,7 +60,7 @@ enum class WavChan { Left, Right, Average, Mono };
 
 // Reads signed 16-bit and returns signed 24-bit stored in an int32_t
 template<WavChan Chan>
-inline int32_t get_sample(uint32_t addr) {
+inline int32_t get_sample(uintptr_t addr) {
 	wait_memory_ready();
 
 	int16_t r;
