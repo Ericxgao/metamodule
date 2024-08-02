@@ -383,7 +383,7 @@ void SampleIndexLoader::load_new_folders(void) {
 	uint8_t checked_root = 0;
 
 	// reset dir object, so it can be used by get_next_dir
-	root_dir.obj.fs = 0;
+	sd.reset_dir(&root_dir);
 
 	while (1) {
 		bank_loaded = 0;
@@ -591,7 +591,7 @@ uint8_t SampleIndexLoader::load_banks_by_color_prefix(void) {
 
 	banks_loaded = 0;
 
-	rootdir.obj.fs = 0; // get_next_dir() needs us to do this, to reset it
+	sd.reset_dir(&rootdir);
 
 	while (1) {
 		// Find the next directory in the root folder
@@ -724,7 +724,9 @@ uint8_t SampleIndexLoader::load_banks_with_noncolors(void) {
 	banks_loaded = 0;
 
 	checked_root = 0;
-	rootdir.obj.fs = 0; // get_next_dir() needs us to do this, to reset it
+
+	// get_next_dir() needs us to do this, to reset it
+	sd.reset_dir(&rootdir);
 
 	while (1) {
 		if (!checked_root) {

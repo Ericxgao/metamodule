@@ -323,7 +323,7 @@ FRESULT SampleIndex::backup_sampleindex_file(void) {
 			return FR_INT_ERR; // ToDo: there should be a way to report this error more accurately
 		}
 
-		if (f_eof(&indexfile)) {
+		if (sd.f_eof(&indexfile)) {
 			sd.f_close(&indexfile);
 			sd.f_close(&backupindex);
 			return FR_OK;
@@ -351,7 +351,7 @@ bool SampleIndex::check_sampleindex_valid(const char *indexfilename) {
 	// Verify it's a complete file, with EOF_TAG at the end
 	l = str_len(EOF_TAG) + EOF_PAD;
 
-	res = sd.f_lseek(&temp_file, f_size(&temp_file) - l);
+	res = sd.f_lseek(&temp_file, sd.f_size(&temp_file) - l);
 	if (res != FR_OK) {
 		sd.f_close(&temp_file);
 		return false;
@@ -434,7 +434,7 @@ FRESULT SampleIndex::load_sampleindex_file(SampleIndex::IndexSelection use_backu
 
 	uint32_t dot_cnt = 0;
 	// Read File
-	while (!f_eof(&temp_file)) // until we reach the eof
+	while (!sd.f_eof(&temp_file)) // until we reach the eof
 	{
 		sd.f_gets(read_buffer, FF_MAX_LFN + 1, &temp_file); // Read next line
 		pr_log(".");

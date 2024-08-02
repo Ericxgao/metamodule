@@ -160,7 +160,7 @@ public:
 						pr_err("Err EOF\n");
 					}
 
-					s.sample_file_curpos[samplenum] = f_tell(&s.fil[samplenum]) - s_sample->startOfData;
+					s.sample_file_curpos[samplenum] = sd.f_tell(&s.fil[samplenum]) - s_sample->startOfData;
 
 					if (s.sample_file_curpos[samplenum] >= s_sample->inst_end) {
 						s.is_buffered_to_file_end[samplenum] = 1;
@@ -176,12 +176,12 @@ public:
 						// Jump back a block
 						rd = READ_BLOCK_SIZE;
 
-						t_fptr = f_tell(&s.fil[samplenum]);
+						t_fptr = sd.f_tell(&s.fil[samplenum]);
 						res = sd.f_lseek(&s.fil[samplenum], t_fptr - READ_BLOCK_SIZE);
-						if (res || (f_tell(&s.fil[samplenum]) != (t_fptr - READ_BLOCK_SIZE)))
+						if (res || (sd.f_tell(&s.fil[samplenum]) != (t_fptr - READ_BLOCK_SIZE)))
 							g_error |= LSEEK_FPTR_MISMATCH;
 
-						s.sample_file_curpos[samplenum] = f_tell(&s.fil[samplenum]) - s_sample->startOfData;
+						s.sample_file_curpos[samplenum] = sd.f_tell(&s.fil[samplenum]) - s_sample->startOfData;
 
 					} else {
 						// rd < READ_BLOCK_SIZE: read the first block
@@ -198,7 +198,7 @@ public:
 					}
 
 					// Read one block forward
-					t_fptr = f_tell(&s.fil[samplenum]);
+					t_fptr = sd.f_tell(&s.fil[samplenum]);
 					res = sd.f_read(&s.fil[samplenum], file_read_buffer, rd, &br);
 					if (res != FR_OK)
 						g_error |= FILE_READ_FAIL_1;
@@ -210,7 +210,7 @@ public:
 					res = sd.f_lseek(&s.fil[samplenum], t_fptr);
 					if (res != FR_OK)
 						g_error |= FILE_SEEK_FAIL;
-					if (f_tell(&s.fil[samplenum]) != t_fptr)
+					if (sd.f_tell(&s.fil[samplenum]) != t_fptr)
 						g_error |= LSEEK_FPTR_MISMATCH;
 				}
 

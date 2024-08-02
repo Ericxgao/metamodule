@@ -18,7 +18,7 @@ extern IntercoreModuleFS::Message icc_module_fs_message_core0;
 extern IntercoreModuleFS::Message icc_module_fs_message_core1;
 } // namespace StaticBuffers
 
-static constexpr bool print_fs_calls = true;
+static constexpr bool print_fs_calls = false;
 static constexpr bool write_access = false;
 
 static inline void fs_trace(const char *str) {
@@ -301,19 +301,15 @@ int FS::f_puts(const TCHAR *str, FIL *fp) {
 }
 
 int FS::f_printf(FIL *fp, const TCHAR *fmt, ...) {
-	va_list args1;
-	va_start(args1, fmt);
-	va_list args2;
-	va_copy(args2, args1);
-	auto sz = vsnprintf(nullptr, 0, fmt, args1);
-	if (sz > 1024) {
-		fs_trace("Tructuting f_printf to 1024B\n");
-		sz = 1024;
-	}
-	char buf[1 + sz];
-	va_end(args1);
-	vsnprintf(buf, sizeof buf, fmt, args2);
-	va_end(args2);
+	constexpr int MaxStringSize = 1024;
+
+	va_list args;
+	va_start(args, fmt);
+	char buf[1 + MaxStringSize];
+	auto sz = vsnprintf(buf, sizeof buf, fmt, args);
+	if (sz > MaxStringSize)
+		fs_trace("Tructuting f_printf to %zu chars\n", MaxStringSize);
+	va_end(args);
 
 	return f_puts(buf, fp);
 }
@@ -381,6 +377,48 @@ FRESULT FS::f_getcwd(TCHAR *buff, UINT len) {
 	return FR_OK;
 }
 
+void FS::reset_dir(DIR *dp) {
+	dp->obj.fs = nullptr;
+}
+
+void FS::reset_file(FIL *fp) {
+	fp->obj.fs = nullptr;
+	fp->cltbl = nullptr;
+}
+
+bool FS::is_file_reset(FIL *fp) {
+	return fp->obj.fs == nullptr;
+}
+
+bool FS::f_eof(FIL *fp) {
+	return fp->fptr == fp->obj.objsize;
+}
+
+BYTE FS::f_error(FIL *fp) {
+	return fp->err;
+}
+
+FSIZE_t FS::f_tell(FIL *fp) {
+	return fp->fptr;
+}
+
+FSIZE_t FS::f_size(FIL *fp) {
+	return fp->obj.objsize;
+}
+
+FRESULT FS::f_rewind(FIL *fp) {
+	return this->f_lseek(fp, 0);
+}
+
+FRESULT FS::f_rewinddir(DIR *dp) {
+	return this->f_readdir(dp, nullptr);
+}
+
+FRESULT FS::f_rmdir(const TCHAR *path) {
+	return this->f_unlink(path);
+}
+
+// Not supported:
 //FRESULT FS::f_chdrive(const TCHAR *path);
 // FRESULT FS::f_getfree(const TCHAR *path, DWORD *nclst, FATFS **fatfs); /* Get number of free clusters on the drive */
 // FRESULT FS::f_getlabel(const TCHAR *path, TCHAR *label, DWORD *vsn);   /* Get volume label */

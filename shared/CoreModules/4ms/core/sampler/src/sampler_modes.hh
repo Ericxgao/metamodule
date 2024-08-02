@@ -67,7 +67,7 @@ public:
 			state.play_buff_bufferedamt[i] = 0;
 			state.is_buffered_to_file_end[i] = 0;
 
-			// fil[i].obj.fs = nullptr;
+			// sd.reset_file(&state.fil[i]);
 		}
 
 		// Verify the channels are set to enabled banks, and correct if necessary
@@ -179,7 +179,7 @@ public:
 		// Force Reload flag is set (Edit mode, or loaded new index)
 		// File is empty (never been read since entering this bank)
 		// Sample File Changed flag is set (new file was recorded into this slot)
-		if (flags.take(Flag::ForceFileReload) || (state.fil[samplenum].obj.fs == 0) ||
+		if (flags.take(Flag::ForceFileReload) || sd.is_file_reset(&state.fil[samplenum]) ||
 			(s_sample->file_status == FileStatus::NewFile))
 		{
 			res = reload_sample_file(&state.fil[samplenum], s_sample, sd);
@@ -203,8 +203,8 @@ public:
 			}
 
 			// Check the file is really as long as the sampleSize says it is
-			if (f_size(&state.fil[samplenum]) < (s_sample->startOfData + s_sample->sampleSize)) {
-				s_sample->sampleSize = f_size(&state.fil[samplenum]) - s_sample->startOfData;
+			if (sd.f_size(&state.fil[samplenum]) < (s_sample->startOfData + s_sample->sampleSize)) {
+				s_sample->sampleSize = sd.f_size(&state.fil[samplenum]) - s_sample->startOfData;
 
 				if (s_sample->inst_end > s_sample->sampleSize)
 					s_sample->inst_end = s_sample->sampleSize;
@@ -293,7 +293,7 @@ public:
 			}
 			if (g_error & LSEEK_FPTR_MISMATCH) {
 				state.sample_file_startpos =
-					align_addr(f_tell(&state.fil[samplenum]) - s_sample->startOfData, s_sample->blockAlign);
+					align_addr(sd.f_tell(&state.fil[samplenum]) - s_sample->startOfData, s_sample->blockAlign);
 			}
 
 			state.cache[samplenum].low = state.sample_file_startpos;
@@ -416,7 +416,7 @@ public:
 
 		// Seek the starting position in the file
 		// This gets us ready to start reading from the new position
-		if (state.fil[samplenum].obj.id > 0) {
+		if (!sd.is_file_reset(&state.fil[samplenum])) {
 			FRESULT res;
 			res = set_file_pos(banknum, samplenum);
 			if (res != FR_OK)
@@ -530,10 +530,7 @@ private:
 
 		for (samplenum = 0; samplenum < NUM_SAMPLES_PER_BANK; samplenum++) {
 			sd.f_close(&state.fil[samplenum]);
-			//TODO:
-			// sd.reset_file(state.fil[samplenum]);
-			state.fil[samplenum].obj.fs = 0;
-			state.fil[samplenum].cltbl = nullptr;
+			sd.reset_file(&state.fil[samplenum]);
 
 			state.is_buffered_to_file_end[samplenum] = 0;
 

@@ -376,6 +376,55 @@ FRESULT FS::f_getcwd(TCHAR *buff, UINT len) {
 	return FR_OK;
 }
 
+void FS::reset_dir(DIR *dp) {
+	// dp->obj.fs = nullptr;
+}
+
+void FS::reset_file(FIL *fp) {
+	// fp->obj.fs = nullptr;
+	// fp->cltbl = nullptr;
+}
+
+bool FS::is_file_reset(FIL *fp) {
+	// return fp->obj.fs == nullptr;
+	return true;
+}
+
+bool FS::f_eof(FIL *fp) {
+	// return fp->fptr == fp->obj.objsize;
+	return true;
+}
+
+BYTE FS::f_error(FIL *fp) {
+	// return fp->err;
+	return 0xFF;
+}
+
+FSIZE_t FS::f_tell(FIL *fp) {
+	// return fp->fptr;
+	return 0;
+}
+
+FSIZE_t FS::f_size(FIL *fp) {
+	// return fp->obj.objsize;
+	return 0;
+}
+
+FRESULT FS::f_rewind(FIL *fp) {
+	// return this->f_lseek(fp, 0);
+	return FR_INT_ERR;
+}
+
+FRESULT FS::f_rewinddir(DIR *dp) {
+	// return this->f_readdir(dp, nullptr);
+	return FR_INT_ERR;
+}
+
+FRESULT FS::f_rmdir(const TCHAR *path) {
+	// return this->f_unlink(path);
+	return FR_INT_ERR;
+}
+
 //FRESULT FS::f_chdrive(const TCHAR *path);
 // FRESULT FS::f_getfree(const TCHAR *path, DWORD *nclst, FATFS **fatfs); /* Get number of free clusters on the drive */
 // FRESULT FS::f_getlabel(const TCHAR *path, TCHAR *label, DWORD *vsn);   /* Get volume label */
