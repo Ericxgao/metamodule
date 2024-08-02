@@ -38,7 +38,6 @@
 #include "sts_filesystem.hh"
 #include "bank_util.hh"
 #include "elements.hh"
-#include "ff.h"
 #include "log.hh"
 #include "sample_header.hh"
 #include "str_util.h"

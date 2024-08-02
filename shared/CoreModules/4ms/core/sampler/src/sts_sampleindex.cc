@@ -34,6 +34,10 @@
 #include "sdcard.hh"
 #include "str_util.h"
 
+#ifdef METAMODULE
+#include <chrono>
+#endif
+
 namespace SamplerKit
 {
 
@@ -186,9 +190,14 @@ FRESULT SampleIndex::write_sampleindex_file() {
 	}
 
 	// Write global info to file
-	sd.f_printf(&temp_file, "Timestamp: %d\n", get_fattime()); // timestamp
-	sd.f_printf(&temp_file, EOF_TAG);						   // end of file tag
-	sd.f_printf(&temp_file, "\n"); // text editors report an error if file does not end in newline
+#ifdef METAMODULE
+	auto curtm = std::chrono::steady_clock::now().time_since_epoch().count() / 1'000'000LL;
+#else
+	auto curtm = get_fattime();
+#endif
+	sd.f_printf(&temp_file, "Timestamp: %d\n", curtm); // timestamp
+	sd.f_printf(&temp_file, EOF_TAG);				   // end of file tag
+	sd.f_printf(&temp_file, "\n");					   // text editors report an error if file does not end in newline
 
 	// CLOSE INDEX FILE
 	sd.f_sync(&temp_file);

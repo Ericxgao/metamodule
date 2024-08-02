@@ -29,7 +29,7 @@ FS::~FS() = default;
 
 // READING
 
-FRESULT FS::f_open(FIL *fp, const TCHAR *path, BYTE mode) {
+FRESULT FS::f_open(File *fp, const char *path, uint8_t mode) {
 	auto fullpath = impl->full_path(path);
 
 	if (!write_access)
@@ -48,7 +48,7 @@ FRESULT FS::f_open(FIL *fp, const TCHAR *path, BYTE mode) {
 																			  "";
 
 	auto fil = std::fopen(path, posixmode.c_str());
-	fp = reinterpret_cast<FIL *>(fil);
+	fp = reinterpret_cast<File *>(fil);
 
 	if (fil == nullptr)
 		return FR_NO_FILE;
@@ -56,7 +56,7 @@ FRESULT FS::f_open(FIL *fp, const TCHAR *path, BYTE mode) {
 		return FR_OK;
 }
 
-FRESULT FS::f_close(FIL *fil) {
+FRESULT FS::f_close(File *fil) {
 	fs_trace("f_close(%p)\n", fil);
 
 	// auto msg = IntercoreModuleFS::Close{
@@ -71,7 +71,7 @@ FRESULT FS::f_close(FIL *fil) {
 	return FR_TIMEOUT;
 }
 
-FRESULT FS::f_lseek(FIL *fil, uint64_t offset) {
+FRESULT FS::f_lseek(File *fil, uint64_t offset) {
 	fs_trace("f_lseek(%p, %lld)\n", fil, offset);
 
 	// auto msg = IntercoreModuleFS::Seek{
@@ -80,14 +80,14 @@ FRESULT FS::f_lseek(FIL *fil, uint64_t offset) {
 	// };
 
 	// if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Seek>(msg, 3000)) {
-	// 	*fil = response->fil; //copy FIL back
+	// 	*fil = response->fil; //copy File back
 	// 	return response->res;
 	// }
 
 	return FR_TIMEOUT;
 }
 
-FRESULT FS::f_read(FIL *fil, void *buff, UINT bytes_to_read, UINT *br) {
+FRESULT FS::f_read(File *fil, void *buff, unsigned bytes_to_read, unsigned *br) {
 	fs_trace("f_read(%p, %p, %u, ...)\n", fil, buff, bytes_to_read);
 
 	// if (bytes_to_read > impl->file_buffer.size()) {
@@ -110,7 +110,7 @@ FRESULT FS::f_read(FIL *fil, void *buff, UINT bytes_to_read, UINT *br) {
 	return FR_TIMEOUT;
 }
 
-TCHAR *FS::f_gets(TCHAR *buffer, int len, FIL *fil) {
+char *FS::f_gets(char *buffer, int len, File *fil) {
 	fs_trace("f_gets(%p, %d, %p)\n", buffer, len, fil);
 
 	// if ((size_t)len > impl->file_buffer.size()) {
@@ -133,7 +133,7 @@ TCHAR *FS::f_gets(TCHAR *buffer, int len, FIL *fil) {
 	return nullptr;
 }
 
-FRESULT FS::f_stat(const TCHAR *path, FILINFO *info) {
+FRESULT FS::f_stat(const char *path, Fileinfo *info) {
 	auto fullpath = impl->full_path(path);
 
 	fs_trace("f_stat(%s, %p)\n", fullpath.c_str(), info);
@@ -153,7 +153,7 @@ FRESULT FS::f_stat(const TCHAR *path, FILINFO *info) {
 
 // DIRS (READ-ONLY)
 
-FRESULT FS::f_opendir(DIR *dir, const TCHAR *path) {
+FRESULT FS::f_opendir(Dir *dir, const char *path) {
 	auto fullpath = impl->full_path(path);
 
 	fs_trace("f_opendir(%p, %s)\n", dir, fullpath.c_str());
@@ -171,7 +171,7 @@ FRESULT FS::f_opendir(DIR *dir, const TCHAR *path) {
 	return FR_TIMEOUT;
 }
 
-FRESULT FS::f_closedir(DIR *dir) {
+FRESULT FS::f_closedir(Dir *dir) {
 	fs_trace("f_closedir(%p)\n", dir);
 
 	// auto msg = IntercoreModuleFS::CloseDir{
@@ -186,7 +186,7 @@ FRESULT FS::f_closedir(DIR *dir) {
 	return FR_TIMEOUT;
 }
 
-FRESULT FS::f_readdir(DIR *dir, FILINFO *info) {
+FRESULT FS::f_readdir(Dir *dir, Fileinfo *info) {
 	fs_trace("f_readdir(%p, %p)\n", dir, info);
 	// auto msg = IntercoreModuleFS::ReadDir{
 	// 	.dir = *dir,
@@ -202,7 +202,7 @@ FRESULT FS::f_readdir(DIR *dir, FILINFO *info) {
 	return FR_TIMEOUT;
 }
 
-FRESULT FS::f_findfirst(DIR *dir, FILINFO *info, const TCHAR *path, const TCHAR *pattern) {
+FRESULT FS::f_findfirst(Dir *dir, Fileinfo *info, const char *path, const char *pattern) {
 	auto fullpath = impl->full_path(path);
 
 	fs_trace("f_findfirst(%p, %p, %s, %s)\n", dir, info, fullpath.c_str(), pattern);
@@ -223,7 +223,7 @@ FRESULT FS::f_findfirst(DIR *dir, FILINFO *info, const TCHAR *path, const TCHAR 
 	return FR_TIMEOUT;
 }
 
-FRESULT FS::f_findnext(DIR *dir, FILINFO *info) {
+FRESULT FS::f_findnext(Dir *dir, Fileinfo *info) {
 	fs_trace("f_findnext %p\n", dir);
 
 	// auto msg = IntercoreModuleFS::FindNext{
@@ -240,9 +240,9 @@ FRESULT FS::f_findnext(DIR *dir, FILINFO *info) {
 	return FR_TIMEOUT;
 }
 
-// CREATE DIR
+// CREATE Dir
 
-FRESULT FS::f_mkdir(const TCHAR *path) {
+FRESULT FS::f_mkdir(const char *path) {
 	auto fullpath = impl->full_path(path);
 
 	fs_trace("f_mkdir(%s)\n", fullpath.c_str());
@@ -262,58 +262,54 @@ FRESULT FS::f_mkdir(const TCHAR *path) {
 
 // WRITING
 
-FRESULT FS::f_write(FIL *fp, const void *buff, UINT btw, UINT *bw) {
+FRESULT FS::f_write(File *fp, const void *buff, unsigned btw, unsigned *bw) {
 	if (write_access) {
 		fs_trace("f_write(%p, ...)\n", fp);
 	}
 	return FR_INT_ERR;
 }
 
-FRESULT FS::f_sync(FIL *fp) {
+FRESULT FS::f_sync(File *fp) {
 	fs_trace("f_sync(%p)\n", fp);
 	if (write_access) {
 	}
 	return FR_INT_ERR;
 }
 
-FRESULT FS::f_truncate(FIL *fp) {
+FRESULT FS::f_truncate(File *fp) {
 	fs_trace("f_truncate(%p)\n", fp);
 	if (write_access) {
 	}
 	return FR_INT_ERR;
 }
 
-int FS::f_putc(TCHAR c, FIL *fp) {
+int FS::f_putc(char c, File *fp) {
 	char s[2]{c, 0};
 	return f_puts(s, fp);
 }
 
-int FS::f_puts(const TCHAR *str, FIL *fp) {
+int FS::f_puts(const char *str, File *fp) {
 	if (write_access) {
 		fs_trace("f_puts(\"%s\", %p)\n", str, fp);
 	}
 	return FR_INT_ERR;
 }
 
-int FS::f_printf(FIL *fp, const TCHAR *fmt, ...) {
-	va_list args1;
-	va_start(args1, fmt);
-	va_list args2;
-	va_copy(args2, args1);
-	auto sz = vsnprintf(nullptr, 0, fmt, args1);
-	if (sz > 1024) {
-		fs_trace("Tructuting f_printf to 1024B\n");
-		sz = 1024;
-	}
-	char buf[1 + sz];
-	va_end(args1);
-	vsnprintf(buf, sizeof buf, fmt, args2);
-	va_end(args2);
+int FS::f_printf(File *fp, const char *fmt, ...) {
+	constexpr int MaxStringSize = 1024;
+
+	va_list args;
+	va_start(args, fmt);
+	char buf[1 + MaxStringSize];
+	auto sz = vsnprintf(buf, sizeof buf, fmt, args);
+	if (sz > MaxStringSize)
+		fs_trace("Tructuting f_printf to %zu chars\n", MaxStringSize);
+	va_end(args);
 
 	return f_puts(buf, fp);
 }
 
-FRESULT FS::f_expand(FIL *fp, FSIZE_t fsz, BYTE opt) {
+FRESULT FS::f_expand(File *fp, FSIZE_t fsz, uint8_t opt) {
 	fs_trace("f_expand(%p...)\n", fp);
 	if (write_access) {
 	}
@@ -322,7 +318,7 @@ FRESULT FS::f_expand(FIL *fp, FSIZE_t fsz, BYTE opt) {
 
 // OTHER (write-access)
 
-FRESULT FS::f_unlink(const TCHAR *path) {
+FRESULT FS::f_unlink(const char *path) {
 	auto fullpath = impl->full_path(path);
 
 	fs_trace("f_unlink(%s)\n", fullpath.c_str());
@@ -332,7 +328,7 @@ FRESULT FS::f_unlink(const TCHAR *path) {
 	return FR_INT_ERR;
 }
 
-FRESULT FS::f_rename(const TCHAR *path_old, const TCHAR *path_new) {
+FRESULT FS::f_rename(const char *path_old, const char *path_new) {
 	auto fullpath_old = impl->full_path(path_old);
 	auto fullpath_new = impl->full_path(path_new);
 
@@ -342,7 +338,7 @@ FRESULT FS::f_rename(const TCHAR *path_old, const TCHAR *path_new) {
 	return FR_INT_ERR;
 }
 
-FRESULT FS::f_utime(const TCHAR *path, const FILINFO *fno) {
+FRESULT FS::f_utime(const char *path, const Fileinfo *fno) {
 	auto fullpath = impl->full_path(path);
 
 	fs_trace("f_utime(%s)\n", fullpath.c_str());
@@ -354,7 +350,7 @@ FRESULT FS::f_utime(const TCHAR *path, const FILINFO *fno) {
 
 // Working Dir:
 
-FRESULT FS::f_chdir(const TCHAR *path) {
+FRESULT FS::f_chdir(const char *path) {
 	fs_trace("f_chdir(%s)\n", path);
 
 	//TODO: ensure ends in a slash
@@ -363,7 +359,7 @@ FRESULT FS::f_chdir(const TCHAR *path) {
 	return FR_OK;
 }
 
-FRESULT FS::f_getcwd(TCHAR *buff, UINT len) {
+FRESULT FS::f_getcwd(char *buff, unsigned len) {
 	fs_trace("f_getcwd()\n");
 
 	if (buff == nullptr)
@@ -376,63 +372,63 @@ FRESULT FS::f_getcwd(TCHAR *buff, UINT len) {
 	return FR_OK;
 }
 
-void FS::reset_dir(DIR *dp) {
+void FS::reset_dir(Dir *dp) {
 	// dp->obj.fs = nullptr;
 }
 
-void FS::reset_file(FIL *fp) {
+void FS::reset_file(File *fp) {
 	// fp->obj.fs = nullptr;
 	// fp->cltbl = nullptr;
 }
 
-bool FS::is_file_reset(FIL *fp) {
+bool FS::is_file_reset(File *fp) {
 	// return fp->obj.fs == nullptr;
 	return true;
 }
 
-bool FS::f_eof(FIL *fp) {
+bool FS::f_eof(File *fp) {
 	// return fp->fptr == fp->obj.objsize;
 	return true;
 }
 
-BYTE FS::f_error(FIL *fp) {
+uint8_t FS::f_error(File *fp) {
 	// return fp->err;
 	return 0xFF;
 }
 
-FSIZE_t FS::f_tell(FIL *fp) {
+FSIZE_t FS::f_tell(File *fp) {
 	// return fp->fptr;
 	return 0;
 }
 
-FSIZE_t FS::f_size(FIL *fp) {
+FSIZE_t FS::f_size(File *fp) {
 	// return fp->obj.objsize;
 	return 0;
 }
 
-FRESULT FS::f_rewind(FIL *fp) {
+FRESULT FS::f_rewind(File *fp) {
 	// return this->f_lseek(fp, 0);
 	return FR_INT_ERR;
 }
 
-FRESULT FS::f_rewinddir(DIR *dp) {
+FRESULT FS::f_rewinddir(Dir *dp) {
 	// return this->f_readdir(dp, nullptr);
 	return FR_INT_ERR;
 }
 
-FRESULT FS::f_rmdir(const TCHAR *path) {
+FRESULT FS::f_rmdir(const char *path) {
 	// return this->f_unlink(path);
 	return FR_INT_ERR;
 }
 
-//FRESULT FS::f_chdrive(const TCHAR *path);
-// FRESULT FS::f_getfree(const TCHAR *path, DWORD *nclst, FATFS **fatfs); /* Get number of free clusters on the drive */
-// FRESULT FS::f_getlabel(const TCHAR *path, TCHAR *label, DWORD *vsn);   /* Get volume label */
-// FRESULT FS::f_setlabel(const TCHAR *label);							   /* Set volume label */
-// FRESULT FS::f_mount(FATFS *fs, const TCHAR *path, BYTE opt); /* Mount/Unmount a logical drive */
-// FRESULT FS::f_mkfs (const TCHAR* path, const MKFS_PARM* opt, void* work, UINT len);	/* Create a FAT volume */
-// FRESULT FS::f_fdisk(BYTE pdrv, const LBA_t ptbl[], void *work); /* Divide a physical drive into some partitions */
+//FRESULT FS::f_chdrive(const char *path);
+// FRESULT FS::f_getfree(const char *path, DWORD *nclst, FATFS **fatfs); /* Get number of free clusters on the drive */
+// FRESULT FS::f_getlabel(const char *path, char *label, DWORD *vsn);   /* Get volume label */
+// FRESULT FS::f_setlabel(const char *label);							   /* Set volume label */
+// FRESULT FS::f_mount(FATFS *fs, const char *path, uint8_t opt); /* Mount/Unmount a logical drive */
+// FRESULT FS::f_mkfs (const char* path, const MKFS_PARM* opt, void* work, unsigned len);	/* Create a FAT volume */
+// FRESULT FS::f_fdisk(uint8_t pdrv, const LBA_t ptbl[], void *work); /* Divide a physical drive into some partitions */
 // FRESULT FS::f_setcp(WORD cp);					  /* Set current code page */
-// FRESULT FS::f_forward(FIL *fp, UINT (*func)(const BYTE *, UINT), UINT btf, UINT *bf); /* Forward data to the stream */
+// FRESULT FS::f_forward(FIL *fp, unsigned (*func)(const uint8_t *, unsigned), unsigned btf, unsigned *bf); /* Forward data to the stream */
 
 } // namespace MetaModule

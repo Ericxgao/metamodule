@@ -2,8 +2,58 @@
 #include <cstdint>
 #include <cstdio>
 
-using FIL = std::FILE;
-using DIR = std::FILE;
+namespace MetaModule
+{
+
+struct File {
+	std::FILE fil{};
+
+	File() {
+		reset();
+	}
+
+	void reset() {
+		// fil.obj.fs = nullptr;
+	}
+
+	bool is_reset() {
+		return true;
+		// return fil.obj.fs == nullptr;
+	}
+};
+
+struct Fileinfo {
+	// FILINFO filinfo;
+
+	const char *fname() {
+		return "";
+		// return filinfo.fname;
+	}
+
+	bool is_dir() {
+		return false;
+		// return filinfo.fattrib & AM_DIR;
+	}
+};
+
+struct Dir {
+	// DIR dir{};
+
+	Dir() {
+		reset();
+	}
+
+	void reset() {
+		// dir.obj.fs = nullptr;
+	}
+
+	bool is_reset() {
+		return true;
+		// return dir.obj.fs == nullptr;
+	}
+};
+
+} // namespace MetaModule
 
 using BYTE = uint8_t;
 typedef unsigned int UINT;	/* int must be 16-bit or 32-bit */
@@ -39,18 +89,23 @@ typedef enum {
 	FR_INVALID_PARAMETER	/* (19) Given parameter is invalid */
 } FRESULT;
 
-#define FA_READ 0x01
-#define FA_WRITE 0x02
-#define FA_OPEN_EXISTING 0x00
-#define FA_CREATE_NEW 0x04
-#define FA_CREATE_ALWAYS 0x08
-#define FA_OPEN_ALWAYS 0x10
-#define FA_OPEN_APPEND 0x30
+enum {
+	FA_READ = 0x01,
+	FA_WRITE = 0x02,
+	FA_OPEN_EXISTING = 0x00,
+	FA_CREATE_NEW = 0x04,
+	FA_CREATE_ALWAYS = 0x08,
+	FA_OPEN_ALWAYS = 0x10,
+	FA_OPEN_APPEND = 0x30,
+};
 
-/* Fast seek controls (2nd argument of f_lseek) */
-#define CREATE_LINKMAP ((FSIZE_t)0 - 1)
+#define FF_MAX_LFN 255
+#define FF_LFN_BUF 255
 
-struct FATFS;
+// /* Fast seek controls (2nd argument of f_lseek) */
+// #define CREATE_LINKMAP ((FSIZE_t)0 - 1)
+
+// struct FATFS;
 
 // typedef struct {
 // 	FATFS *fs; /* Pointer to the hosting volume of this object */
@@ -96,14 +151,14 @@ struct FATFS;
 // #endif
 // } DIR;
 
-#define FF_SFN_BUF 12
-#define FF_LFN_BUF 255
+// #define FF_SFN_BUF 12
+// #define FF_LFN_BUF 255
 
-typedef struct {
-	FSIZE_t fsize;				   /* File size */
-	WORD fdate;					   /* Modified date */
-	WORD ftime;					   /* Modified time */
-	BYTE fattrib;				   /* File attribute */
-	TCHAR altname[FF_SFN_BUF + 1]; /* Altenative file name */
-	TCHAR fname[FF_LFN_BUF + 1];   /* Primary file name */
-} FILINFO;
+// typedef struct {
+// 	FSIZE_t fsize;				   /* File size */
+// 	WORD fdate;					   /* Modified date */
+// 	WORD ftime;					   /* Modified time */
+// 	BYTE fattrib;				   /* File attribute */
+// 	TCHAR altname[FF_SFN_BUF + 1]; /* Altenative file name */
+// 	TCHAR fname[FF_LFN_BUF + 1];   /* Primary file name */
+// } FILINFO;
