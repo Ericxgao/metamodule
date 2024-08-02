@@ -81,7 +81,7 @@ void start_module_threads() {
 
 	mdrivlib::TimekeeperConfig task_config{
 		.TIMx = current_core == 0 ? TIM7 : TIM6,
-		.period_ns = mdrivlib::TimekeeperConfig::Hz(1000),
+		.period_ns = mdrivlib::TimekeeperConfig::Hz(2000),
 		.priority1 = 3,
 		.priority2 = 3,
 	};
