@@ -526,10 +526,10 @@ private:
 
 	void init_changed_bank() {
 		uint8_t samplenum;
-		FRESULT res;
+		// FRESULT res;
 
 		for (samplenum = 0; samplenum < NUM_SAMPLES_PER_BANK; samplenum++) {
-			res = sd.f_close(&state.fil[samplenum]);
+			sd.f_close(&state.fil[samplenum]);
 			// if (res != FR_OK)
 			state.fil[samplenum].obj.fs = 0;
 			state.fil[samplenum].cltbl = nullptr;
