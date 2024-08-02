@@ -3,13 +3,19 @@
 #include <array>
 #include <cstdarg>
 #include <cstring>
+// #include <osdialog.h>
+#include <rack.hpp>
 #include <string_view>
+
+extern rack::plugin::Plugin *pluginInstance;
 
 namespace MetaModule
 {
 
 static constexpr bool print_fs_calls = true;
 static constexpr bool write_access = false;
+
+static const char SAMPLE_DIR_FILTERS[] = "Sample Index (.dat):dat"; //"WAV (.wav):wav,WAV;Raw:f32,i8,i16,i24,i32,*";
 
 static inline void fs_trace(const char *str) {
 	if constexpr (print_fs_calls)
@@ -29,13 +35,15 @@ FS::~FS() = default;
 
 // Valid Root
 
-// FIXME: needs to match command-line args
-std::array<std::string_view, 2> valid_roots{
-	"./patches/",
-	"../patches/",
-};
-
 bool FS::find_valid_root(std::string_view path) {
+	std::string userdir = rack::asset::user("");
+	std::string userdir2 = rack::asset::plugin(pluginInstance, "");
+
+	std::array<std::string, 2> valid_roots{
+		userdir,
+		userdir2,
+	};
+
 	auto t_root = impl->root;
 	auto t_cwd = impl->cwd;
 
