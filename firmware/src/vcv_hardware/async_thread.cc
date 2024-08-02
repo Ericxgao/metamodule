@@ -28,17 +28,6 @@ uint32_t core() {
 	return (__get_MPIDR() & 0b1); //0 = CA7 Core 1, 1 = CA7 Core 2
 }
 
-// static std::optional<size_t> first_available_id() {
-// 	auto &tasks = core() == 1 ? tasks_core1 : tasks_core0;
-// 	unsigned i = 0;
-// 	for (auto &task : tasks) {
-// 		if (!task.enabled)
-// 			return i;
-// 		i++;
-// 	}
-// 	return std::nullopt;
-// }
-
 } // namespace
 
 AsyncThread::AsyncThread() = default;
