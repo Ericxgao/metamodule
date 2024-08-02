@@ -43,6 +43,7 @@ target_sources(4msLibrary PRIVATE
 # Tapographic Delay
 target_compile_definitions(4msLibrary PRIVATE 
     SAMPLE_RATE=48000
+	TEST
 )
 
 target_include_directories(4msLibrary PRIVATE
