@@ -665,58 +665,59 @@ public:
 
 				if (auto num = cable.midi_note_pitch(); num.has_value()) {
 					update_or_add(midi_note_pitch_conns[num.value()], input_jack);
-					pr_dbg("MIDI note (poly %d)", num.value());
+					pr_trace("MIDI note (poly %d)", num.value());
 
 				} else if (auto num = cable.midi_note_gate(); num.has_value()) {
 					update_or_add(midi_note_gate_conns[num.value()], input_jack);
-					pr_dbg("MIDI gate (poly %d)", num.value());
+					pr_trace("MIDI gate (poly %d)", num.value());
 
 				} else if (auto num = cable.midi_note_vel(); num.has_value()) {
 					update_or_add(midi_note_vel_conns[num.value()], input_jack);
-					pr_dbg("MIDI vel (poly %d)", num.value());
+					pr_trace("MIDI vel (poly %d)", num.value());
 
 				} else if (auto num = cable.midi_note_aft(); num.has_value()) {
 					update_or_add(midi_note_aft_conns[num.value()], input_jack);
-					pr_dbg("MIDI aftertouch (poly %d)", num.value());
+					pr_trace("MIDI aftertouch (poly %d)", num.value());
 
 				} else if (auto num = cable.midi_note_retrig(); num.has_value()) {
 					update_or_add(midi_note_retrig[num.value()].conns, input_jack);
-					pr_dbg("MIDI retrig (poly %d)", num.value());
+					pr_trace("MIDI retrig (poly %d)", num.value());
 
 				} else if (auto num = cable.midi_gate(); num.has_value()) {
 					update_or_add(midi_gate_conns[num.value()], input_jack);
-					pr_dbg("MIDI note %d gate", num.value());
+					pr_trace("MIDI note %d gate", num.value());
 
 				} else if (auto num = cable.midi_cc(); num.has_value()) {
 					update_or_add(midi_cc_conns[num.value()], input_jack);
-					pr_dbg("MIDI CC/PW %d", num.value());
+					pr_trace("MIDI CC/PW %d", num.value());
 
 				} else if (auto num = cable.midi_clk(); num.has_value()) {
 					update_or_add(midi_pulses[TimingEvents::Clock].conns, input_jack);
-					pr_dbg("MIDI Clk");
+					pr_trace("MIDI Clk");
 
 				} else if (auto num = cable.midi_divclk(); num.has_value()) {
 					update_or_add(midi_pulses[TimingEvents::DivClock].conns, input_jack);
 					midi_divclk_div_amt = num.value() + 1;
-					pr_dbg("MIDI Div %d Clk", num.value() + 1);
+					pr_trace("MIDI Div %d Clk", num.value() + 1);
 
 				} else if (auto num = cable.midi_transport(); num.has_value()) {
 					update_or_add(midi_pulses[num.value() + TimingEvents::Start].conns, input_jack);
-					pr_dbg("MIDI %s", num.value() == 0 ? "Start" : num.value() == 1 ? "Stop" : "Cont");
+					pr_trace("MIDI %s", num.value() == 0 ? "Start" : num.value() == 1 ? "Stop" : "Cont");
 
 				} else if (panel_jack_id >= 0 && panel_jack_id < in_conns.size()) {
 					update_or_add(in_conns[panel_jack_id], input_jack);
-					pr_dbg("Map %d", panel_jack_id);
+					pr_trace("Map %d", panel_jack_id);
 
 				} else
 					pr_err("Bad panel jack mapping: panel_jack_id=%d\n", panel_jack_id);
 
-				pr_dbg(" to jack: m=%d, p=%d\n", module_id, jack_id);
+				pr_trace(" to jack: m=%d, p=%d\n", module_id, jack_id);
 
 				// Handle MIDI->Hub and Hub->Hub cables by connecting Hub input to output
 				if (input_jack.module_id == 0) {
 					out_conns[input_jack.jack_id] = input_jack;
-					pr_dbg("Connect hub module out jack %d to panel out %d\n", input_jack.jack_id, input_jack.jack_id);
+					pr_trace(
+						"Connect hub module out jack %d to panel out %d\n", input_jack.jack_id, input_jack.jack_id);
 				}
 			}
 		}
@@ -726,10 +727,10 @@ public:
 			if (panel_jack_id >= PanelDef::NumUserFacingOutJacks)
 				break;
 			out_conns[panel_jack_id] = cable.out;
-			pr_dbg("Connect module %d out jack %d to panel out %d\n",
-				   cable.out.module_id,
-				   cable.out.jack_id,
-				   panel_jack_id);
+			pr_trace("Connect module %d out jack %d to panel out %d\n",
+					 cable.out.module_id,
+					 cable.out.jack_id,
+					 panel_jack_id);
 		}
 	}
 
@@ -795,7 +796,7 @@ private:
 
 	void cache_midi_mapping(const MappedKnob &k) {
 		if (k.is_midi_cc()) {
-			pr_dbg("Midi Map: CC%d to m:%d p:%d\n", k.cc_num(), k.module_id, k.param_id);
+			pr_trace("Midi Map: CC%d to m:%d p:%d\n", k.cc_num(), k.module_id, k.param_id);
 			update_or_add(midi_knob_conns[k.cc_num()], k);
 		} else {
 			pr_warn("Bad Midi Map: CC%d to m:%d p:%d\n", k.cc_num(), k.module_id, k.param_id);
