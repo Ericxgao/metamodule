@@ -89,12 +89,28 @@ INCLUDES += -I$(SHARED)/CoreModules/4ms/core/
 INCLUDES += -I$(SHARED)/CoreModules/4ms/core/peg-common/
 INCLUDES += -I$(SHARED)/CoreModules/4ms/core/peg-common/mocks
 
+# STS
+INCLUDES += -I$(SHARED)/CoreModules/4ms/core/sampler/src
+INCLUDES += -I$(SHARED)/CoreModules/4ms/core/sampler/mocks
+SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/mocks/calibration_storage.cc
+SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/mocks/time.cc
+SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/bank.cc
+SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/sample_file.cc
+SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/sts_filesystem.cc
+SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/sts_sampleindex.cc
+SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/sample_header.cc
+SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/str_util.c
+SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/bank.cc
+SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/bank_util.cc
+SOURCES += $(SHARED)/CoreModules/4ms/core/sampler/src/wavefmt.cc
+FLAGS += -DMETAMODULE
+
 # FLAGS will be passed to both the C and C++ compiler
 FLAGS += -std=c++2a 
 FLAGS += $(INCLUDES)
 FLAGS += -g2
 
-CFLAGS +=
+CFLAGS += -std=c11
 CXXFLAGS += -DVCVRACK
 
 # Careful about linking to shared libraries, since you can't assume much about the user's environment and library search path.
