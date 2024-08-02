@@ -31,7 +31,7 @@ struct SampleState {
 
 	SampleState() {
 		for (auto &f : fil) {
-			f.obj.fs = nullptr;
+			f.reset();
 		}
 	}
 

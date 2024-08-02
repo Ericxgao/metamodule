@@ -392,7 +392,7 @@ public:
 
 	FRESULT set_file_pos(uint8_t b, uint8_t s) {
 		FRESULT r = sd.f_lseek(&state.fil[s], samples[b][s].startOfData + state.sample_file_curpos[s]);
-		if (state.fil[s].fptr != (samples[b][s].startOfData + state.sample_file_curpos[s]))
+		if (sd.f_tell(&state.fil[s]) != (samples[b][s].startOfData + state.sample_file_curpos[s]))
 			g_error |= LSEEK_FPTR_MISMATCH;
 		return r;
 	}

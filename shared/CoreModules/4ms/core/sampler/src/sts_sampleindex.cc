@@ -39,10 +39,12 @@ namespace SamplerKit
 
 #define ALL_BANKS MaxNumBanks
 
-#define SAMPLE_SLOT 1
-#define PLAY_START 2
-#define PLAY_SIZE 3
-#define PLAY_GAIN 4
+enum {
+	SAMPLE_SLOT = 1,
+	PLAY_START = 2,
+	PLAY_SIZE = 3,
+	PLAY_GAIN = 4,
+};
 
 #define PLAYDATTAG_SLOT "- sample slot"
 #define PLAYDATTAG_START "- play start"
@@ -56,7 +58,7 @@ namespace SamplerKit
 #define RENAME_LOG_FILE "renamed_folders.txt"
 
 #define EOF_TAG "End of file"
-#define EOF_PAD 10 // number of characters that can be left after EOF_TAG
+static constexpr int EOF_PAD = 10; // number of characters that can be left after EOF_TAG
 
 // Checks if string ends in ".wav" (case-insensitive)
 static uint8_t is_wav(char *string) {

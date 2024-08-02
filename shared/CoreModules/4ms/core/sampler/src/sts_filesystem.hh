@@ -28,9 +28,7 @@
 
 #pragma once
 #include "bank.hh"
-#include "ff.h"
 #include "flags.hh"
-#include "palette.hh"
 #include "sample_file.hh"
 #include "sdcard.hh"
 #include "sts_sampleindex.hh"
