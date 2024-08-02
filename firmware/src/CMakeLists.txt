@@ -63,6 +63,7 @@ target_sources(vcv_plugin_export PRIVATE ../vcv_plugin/export/src/keep-symbols.c
 # Brands
 #
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../vcv_ports ${CMAKE_BINARY_DIR}/vcv_ports)
+target_include_directories(4msLibrary PRIVATE ${FWDIR}/src/vcv_hardware)
 
 #
 # RYML
@@ -209,6 +210,7 @@ target_include_directories(
           ${FWDIR}/lib/fatfs/source
           ${FWDIR}/src/fs/fatfs
           ${FWDIR}/lib/cmsis-device/stm32mp157c/include
+		  ${FWDIR}/src/vcv_hardware
           #
           ${CMAKE_BINARY_DIR}/checkgit
 )

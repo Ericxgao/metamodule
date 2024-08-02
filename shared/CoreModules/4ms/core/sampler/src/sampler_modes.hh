@@ -530,7 +530,8 @@ private:
 
 		for (samplenum = 0; samplenum < NUM_SAMPLES_PER_BANK; samplenum++) {
 			sd.f_close(&state.fil[samplenum]);
-			// if (res != FR_OK)
+			//TODO:
+			// sd.reset_file(state.fil[samplenum]);
 			state.fil[samplenum].obj.fs = 0;
 			state.fil[samplenum].cltbl = nullptr;
 
