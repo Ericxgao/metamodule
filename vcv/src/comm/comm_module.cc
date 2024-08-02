@@ -5,6 +5,8 @@ void CommModule::onSampleRateChange() {
 }
 
 void CommModule::process(const ProcessArgs &args) {
+	core->id = this->id;
+
 	for (unsigned i = 0; auto &p : params) {
 
 		// Transform VCV scaled values to MetaModule 0...1:
