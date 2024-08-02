@@ -18,7 +18,7 @@ extern IntercoreModuleFS::Message icc_module_fs_message_core0;
 extern IntercoreModuleFS::Message icc_module_fs_message_core1;
 } // namespace StaticBuffers
 
-static constexpr bool print_fs_calls = true;
+static constexpr bool print_fs_calls = false;
 static constexpr bool write_access = false;
 
 static inline void fs_trace(const char *str) {
@@ -36,6 +36,38 @@ FS::FS(std::string_view root)
 }
 
 FS::~FS() = default;
+
+std::array<std::string_view, 2> valid_roots{
+	"1:/",
+	"2:/",
+};
+
+bool FS::find_valid_root(std::string_view path) {
+	auto t_root = impl->root;
+	auto t_cwd = impl->cwd;
+
+	for (auto root : valid_roots) {
+		impl->root = root;
+		impl->cwd = "";
+
+		File file;
+		auto res = f_open(&file, path.data(), FA_READ);
+		auto res2 = f_close(&file);
+		if (res == FR_OK && res2 == FR_OK) {
+			printf("Found valid root %s\n", root.data());
+			//keep the root, restore cwd
+			impl->cwd = t_cwd;
+			return true;
+		}
+	}
+
+	// no valid root found. restore previous values
+	impl->root = t_root;
+	impl->cwd = t_cwd;
+	printf("No valid root found\n");
+
+	return false;
+}
 
 // READING
 

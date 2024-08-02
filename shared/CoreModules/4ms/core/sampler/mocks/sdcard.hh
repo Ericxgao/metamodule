@@ -16,23 +16,18 @@ struct Sdcard : MetaModule::FS {
 
 	constexpr static std::string_view SYS_DIR = "_STS.system";
 	constexpr static std::string_view SYS_DIR_SLASH = "_STS.system/";
+	constexpr static std::string_view SAMPLE_INDEX_FILE_PATH = "_STS.system/sample_index.dat";
 
 	enum INIT_FIND_ALPHA_ACTIONS { FIND_ALPHA_DONT_INIT, FIND_ALPHA_INIT_FOLDER };
 	enum { INVALID_FILENAME = 0xFE, NO_MORE_AVAILABLE_FILES = 0xFF };
 
-	Sdcard(std::string_view root)
-		: FS(root) {
-	}
-
-	void reload() {
+	Sdcard()
+		: FS("") {
 	}
 
 	bool reload_disk() {
-		// if (!sdcard.mount_disk()) {
-		// 	err_cant_mount = true;
-		// 	return false;
-		// }
-		return true;
+		// TODO: check _STS.system[N]/
+		return find_valid_root(SAMPLE_INDEX_FILE_PATH);
 	}
 
 	//
@@ -56,6 +51,7 @@ struct Sdcard : MetaModule::FS {
 		DIR dir;
 
 		res = f_opendir(&dir, SYS_DIR.data());
+		f_closedir(&dir);
 
 		if (res != FR_OK) {
 			return FR_INT_ERR; // fail

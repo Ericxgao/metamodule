@@ -23,6 +23,7 @@ private:
 	// This runs in the low-pri thread:
 	AsyncThread fs_thread{[this]() {
 		if (!index_is_loaded) {
+			sd.reload_disk();
 			index_loader.load_all_banks();
 			index_is_loaded = true;
 		}
@@ -126,7 +127,7 @@ public:
 	// clang-format on
 
 private:
-	SamplerKit::Sdcard sd{"1:/"};
+	SamplerKit::Sdcard sd;
 	SamplerKit::SampleList samples;
 	SamplerKit::BankManager banks{samples};
 	SamplerKit::UserSettings settings{}; //TODO: load from file
