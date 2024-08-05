@@ -15,7 +15,7 @@ struct STSInfo : ModuleInfoBase {
 
 	using enum Coords;
 
-	static constexpr std::array<Element, 41> Elements{{
+	static constexpr std::array<Element, 42> Elements{{
 		Davies1900hBlackKnob{{to_mm<72>(37.52), to_mm<72>(54.34), Center, "Pitch L", ""}, 0.5f},
 		Davies1900hBlackKnob{{to_mm<72>(95.87), to_mm<72>(90.17), Center, "Sample L", ""}, 0.0f},
 		Davies1900hBlackKnob{{to_mm<72>(37.24), to_mm<72>(123.0), Center, "Start Pos. L", ""}, 0.0f},
@@ -57,6 +57,8 @@ struct STSInfo : ModuleInfoBase {
 		RedLight{{to_mm<72>(153.69), to_mm<72>(235.07), Center, "Busy Light", ""}},
 		WhiteLight{{to_mm<72>(273.54), to_mm<72>(227.18), Center, "Play R Light", ""}},
 		AltParamChoiceLabeled{{{to_mm<72>(0), to_mm<72>(0), Center, "Stereo Mode", ""}, 2, 1}, {"Stereo", "Mono"}},
+		AltParamChoiceLabeled{{{to_mm<72>(0), to_mm<72>(0), Center, "Sample Dir.", ""}, 4, 1},
+							  {"(root)", "Samples-1", "Samples-2", "Samples-3"}},
 	}};
 
 	enum class Elem {
@@ -101,6 +103,7 @@ struct STSInfo : ModuleInfoBase {
 		BusyLight,
 		PlayRLight,
 		AltParamStereoMode,
+		AltParamSampleDir,
 	};
 
 	// Legacy naming (safe to remove once all legacy 4ms CoreModules are converted)

@@ -23,7 +23,8 @@ private:
 	// This runs in the low-pri thread:
 	AsyncThread fs_thread{[this]() {
 		if (!index_is_loaded) {
-			sd.reload_disk();
+			printf("Loading index from %s\n", index_file.data());
+			sd.reload_disk(index_file);
 			index_loader.load_all_banks();
 			index_is_loaded = true;
 		}
@@ -61,6 +62,15 @@ public:
 		if (param_id == CoreHelper<Info>::param_index<AltParamStereoMode>())
 			settings.stereo_mode = val < 0.5f;
 
+		else if (param_id == CoreHelper<Info>::param_index<AltParamStereoMode>()) {
+			auto new_index_file = root_name(val);
+			if (new_index_file != index_file) {
+				index_file = new_index_file;
+				index_is_loaded = false;
+				printf("Changing index to %s\n", index_file.data());
+			}
+		}
+
 		else if (chanL.set_param(param_id, val))
 			return;
 		else
@@ -76,8 +86,6 @@ public:
 
 	float get_output(int output_id) const override {
 		//TODO: if chanR is not patched, feed mono to chan L
-		if (settings.stereo_mode) {
-		}
 
 		if (output_id == OutL) {
 			if (settings.stereo_mode)
@@ -118,6 +126,11 @@ public:
 
 		else
 			return 0.f;
+	}
+
+	std::string_view root_name(float val) {
+		unsigned index = std::clamp<unsigned>(std::round(val * 4.f), 0, 3);
+		return index_files[index];
 	}
 
 	// Boilerplate to auto-register in ModuleFactory
@@ -207,6 +220,14 @@ private:
 	SamplerKit::Flags index_flags;
 	std::atomic<bool> index_is_loaded = false;
 	SamplerKit::SampleIndexLoader index_loader{sd, samples, banks, index_flags};
+
+	static constexpr std::array<std::string_view, 4> index_files = {
+		"_STS.system/sample_index.dat",
+		"Samples-1/_STS.system/sample_index.dat",
+		"Samples-2/_STS.system/sample_index.dat",
+		"Samples-3/_STS.system/sample_index.dat",
+	};
+	std::string_view index_file = index_files[0];
 };
 
 } // namespace MetaModule

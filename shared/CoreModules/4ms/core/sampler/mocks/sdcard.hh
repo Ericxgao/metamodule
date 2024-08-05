@@ -25,9 +25,9 @@ struct Sdcard : MetaModule::FS {
 		: FS("") {
 	}
 
-	bool reload_disk() {
-		// TODO: check _STS.system[N]/
-		return find_valid_root(SAMPLE_INDEX_FILE_PATH);
+	bool reload_disk(std::string_view root_dir = "") {
+		std::string_view rt = root_dir.size() ? root_dir : SAMPLE_INDEX_FILE_PATH;
+		return find_valid_root(rt);
 	}
 
 	//
