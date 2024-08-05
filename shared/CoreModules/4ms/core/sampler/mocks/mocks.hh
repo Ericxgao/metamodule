@@ -1,8 +1,8 @@
 #pragma once
+#include "elements.hh"
 #include "util/debouncer.hh"
 #include "util/rgbled.hh"
 #include <cstdint>
-#include <limits>
 
 namespace SamplerKit::Mocks
 {
@@ -95,6 +95,6 @@ struct LedElement {
 	}
 };
 
-using RgbLed = MixedRgbLed<LedElement, LedElement, LedElement>;
+using RgbLed = MixedRgbLed<LedElement, LedElement, LedElement, LEDUpdateRateHz>;
 
 } // namespace SamplerKit::Mocks

@@ -90,7 +90,7 @@ struct Params {
 		return time;
 	}
 
-	// Updates every SampleRate / BlockSize (3k default)
+	// Called every SampleRate / BlockSize (3k default)
 	void update(uint32_t time) {
 		this->time = time;
 
