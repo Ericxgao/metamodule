@@ -138,19 +138,41 @@ char *FS::f_gets(char *buffer, int len, File *fil) {
 }
 
 FRESULT FS::f_stat(const char *path, Fileinfo *info) {
+	if (info == nullptr)
+		return FR_INVALID_PARAMETER;
+
 	auto fullpath = impl->full_path(path);
 
-	fs_trace("f_stat(%s, %p)\n", fullpath.c_str(), info);
+	fs_trace("[NOT IMPL] f_stat(%s, %p)\n", fullpath.c_str(), info);
 
-	// auto msg = IntercoreModuleFS::Stat{
-	// 	.path = fullpath.c_str(),
-	// 	// .info = *info, //will be overwritten TODO: check
-	// };
+	// stat p_stat;
 
-	// if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Stat>(msg, 3000)) {
-	// 	*info = response->info;
-	// 	return response->res;
+	// info->fsize = buf->st_size = info.fsize;
+	// epoch = fat_time_to_unix(info.fdate, info.ftime);
+	// buf->st_atime = epoch;                        // Access time
+	// buf->st_mtime = epoch;                        // Modification time
+	// buf->st_ctime = epoch;                        // Creation time
+
+	// // We only handle read only case
+	// mode = (FATFS_R | FATFS_X);
+	// if( !(info.fattrib & AM_RDO))
+	// mode |= (FATFS_W);                        // enable write if NOT read only
+
+	// if(info.fattrib & AM_SYS)
+	// {
+	// buf->st_uid= 0;
+	// buf->st_gid= 0;
 	// }
+	// {
+	// buf->st_uid=1000;
+	// buf->st_gid=1000;
+	// }
+
+	// if(info.fattrib & AM_DIR)
+	// mode |= S_IFDIR;
+	// else
+	// mode |= S_IFREG;
+	// buf->st_mode = mode;
 
 	return FR_TIMEOUT;
 }
@@ -161,86 +183,33 @@ FRESULT FS::f_opendir(Dir *dir, const char *path) {
 	auto fullpath = impl->full_path(path);
 
 	fs_trace("f_opendir(%p, %s)\n", dir, fullpath.c_str());
+	dir->dir = opendir(path);
 
-	// auto msg = IntercoreModuleFS::OpenDir{
-	// 	.dir = *dir,
-	// 	.path = fullpath.c_str(),
-	// };
-
-	// if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::OpenDir>(msg, 3000)) {
-	// 	*dir = response->dir;
-	// 	return response->res;
-	// }
-
-	return FR_TIMEOUT;
+	return dir->dir == nullptr ? FR_NO_FILE : FR_OK;
 }
 
 FRESULT FS::f_closedir(Dir *dir) {
+	if (!dir)
+		return FR_INVALID_PARAMETER;
+
 	fs_trace("f_closedir(%p)\n", dir);
-
-	// auto msg = IntercoreModuleFS::CloseDir{
-	// 	.dir = *dir,
-	// };
-
-	// if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::CloseDir>(msg, 3000)) {
-	// 	*dir = response->dir;
-	// 	return response->res;
-	// }
-
-	return FR_TIMEOUT;
+	return closedir(dir->dir) == 0 ? FR_OK : FR_DISK_ERR;
 }
 
 FRESULT FS::f_readdir(Dir *dir, Fileinfo *info) {
-	fs_trace("f_readdir(%p, %p)\n", dir, info);
-	// auto msg = IntercoreModuleFS::ReadDir{
-	// 	.dir = *dir,
-	// 	.info = *info,
-	// };
-
-	// if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::ReadDir>(msg, 3000)) {
-	// 	*dir = response->dir;
-	// 	*info = response->info;
-	// 	return response->res;
-	// }
-
+	fs_trace("[NOT IMPL] f_readdir(%p, %p)\n", dir, info);
 	return FR_TIMEOUT;
 }
 
 FRESULT FS::f_findfirst(Dir *dir, Fileinfo *info, const char *path, const char *pattern) {
 	auto fullpath = impl->full_path(path);
-
-	fs_trace("f_findfirst(%p, %p, %s, %s)\n", dir, info, fullpath.c_str(), pattern);
-
-	// auto msg = IntercoreModuleFS::FindFirst{
-	// 	.dir = *dir,
-	// 	.info = *info,
-	// 	.path = fullpath.c_str(),
-	// 	.pattern = pattern,
-	// };
-
-	// if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::FindFirst>(msg, 3000)) {
-	// 	*dir = response->dir;
-	// 	*info = response->info;
-	// 	return response->res;
-	// }
+	fs_trace("[NOT IMPL] f_findfirst(%p, %p, %s, %s)\n", dir, info, fullpath.c_str(), pattern);
 
 	return FR_TIMEOUT;
 }
 
 FRESULT FS::f_findnext(Dir *dir, Fileinfo *info) {
-	fs_trace("f_findnext %p\n", dir);
-
-	// auto msg = IntercoreModuleFS::FindNext{
-	// 	.dir = *dir,
-	// 	.info = *info,
-	// };
-
-	// if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::FindNext>(msg, 3000)) {
-	// 	*dir = response->dir;
-	// 	*info = response->info;
-	// 	return response->res;
-	// }
-
+	fs_trace("[NOT IMPL] f_findnext %p\n", dir);
 	return FR_TIMEOUT;
 }
 
@@ -249,17 +218,10 @@ FRESULT FS::f_findnext(Dir *dir, Fileinfo *info) {
 FRESULT FS::f_mkdir(const char *path) {
 	auto fullpath = impl->full_path(path);
 
-	fs_trace("f_mkdir(%s)\n", fullpath.c_str());
-
-	// if (write_access) {
-	// 	auto msg = IntercoreModuleFS::MkDir{
-	// 		.path = fullpath.c_str(),
-	// 	};
-
-	// 	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::MkDir>(msg, 3000)) {
-	// 		return response->res;
-	// 	}
-	// }
+	if (write_access) {
+		fs_trace("f_mkdir(%s)\n", fullpath.c_str());
+		return mkdir(path, 0700) == 0 ? FR_OK : FR_INT_ERR;
+	}
 
 	return FR_TIMEOUT;
 }
@@ -268,7 +230,7 @@ FRESULT FS::f_mkdir(const char *path) {
 
 FRESULT FS::f_write(File *fp, const void *buff, unsigned btw, unsigned *bw) {
 	if (write_access) {
-		fs_trace("f_write(%p, ...)\n", fp);
+		fs_trace("[NOT IMPL] f_write(%p, ...)\n", fp);
 	}
 	return FR_INT_ERR;
 }
@@ -276,12 +238,13 @@ FRESULT FS::f_write(File *fp, const void *buff, unsigned btw, unsigned *bw) {
 FRESULT FS::f_sync(File *fp) {
 	fs_trace("f_sync(%p)\n", fp);
 	if (write_access) {
+		return fflush(fp->fil) == 0 ? FR_OK : FR_INT_ERR;
 	}
 	return FR_INT_ERR;
 }
 
 FRESULT FS::f_truncate(File *fp) {
-	fs_trace("f_truncate(%p)\n", fp);
+	fs_trace("f[NOT IMPL] _truncate(%p)\n", fp);
 	if (write_access) {
 	}
 	return FR_INT_ERR;
@@ -294,7 +257,7 @@ int FS::f_putc(char c, File *fp) {
 
 int FS::f_puts(const char *str, File *fp) {
 	if (write_access) {
-		fs_trace("f_puts(\"%s\", %p)\n", str, fp);
+		fs_trace("[NOT IMPL] f_puts(\"%s\", %p)\n", str, fp);
 	}
 	return FR_INT_ERR;
 }
@@ -307,14 +270,14 @@ int FS::f_printf(File *fp, const char *fmt, ...) {
 	char buf[1 + MaxStringSize];
 	auto sz = vsnprintf(buf, sizeof buf, fmt, args);
 	if (sz > MaxStringSize)
-		fs_trace("Tructuting f_printf to %zu chars\n", MaxStringSize);
+		fs_trace("[NOT IMPL] Tructuting f_printf to %zu chars\n", MaxStringSize);
 	va_end(args);
 
 	return f_puts(buf, fp);
 }
 
 FRESULT FS::f_expand(File *fp, FSIZE_t fsz, uint8_t opt) {
-	fs_trace("f_expand(%p...)\n", fp);
+	fs_trace("[NOT IMPL] f_expand(%p...)\n", fp);
 	if (write_access) {
 	}
 	return FR_INT_ERR;
@@ -325,7 +288,7 @@ FRESULT FS::f_expand(File *fp, FSIZE_t fsz, uint8_t opt) {
 FRESULT FS::f_unlink(const char *path) {
 	auto fullpath = impl->full_path(path);
 
-	fs_trace("f_unlink(%s)\n", fullpath.c_str());
+	fs_trace("[NOT IMPL] f_unlink(%s)\n", fullpath.c_str());
 
 	if (write_access) {
 	}
@@ -336,7 +299,7 @@ FRESULT FS::f_rename(const char *path_old, const char *path_new) {
 	auto fullpath_old = impl->full_path(path_old);
 	auto fullpath_new = impl->full_path(path_new);
 
-	fs_trace("f_rename(%s, %s)\n", path_old, path_new);
+	fs_trace("[NOT IMPL] f_rename(%s, %s)\n", path_old, path_new);
 	if (write_access) {
 	}
 	return FR_INT_ERR;
@@ -345,7 +308,7 @@ FRESULT FS::f_rename(const char *path_old, const char *path_new) {
 FRESULT FS::f_utime(const char *path, const Fileinfo *fno) {
 	auto fullpath = impl->full_path(path);
 
-	fs_trace("f_utime(%s)\n", fullpath.c_str());
+	fs_trace("[NOT IMPL] f_utime(%s)\n", fullpath.c_str());
 
 	if (write_access) {
 	}
@@ -377,7 +340,7 @@ FRESULT FS::f_getcwd(char *buff, unsigned len) {
 }
 
 void FS::reset_dir(Dir *dp) {
-	// dp->obj.fs = nullptr;
+	return (dp == nullptr || dp->dir == nullptr);
 }
 
 void FS::reset_file(File *fp) {
@@ -386,42 +349,57 @@ void FS::reset_file(File *fp) {
 }
 
 bool FS::is_file_reset(File *fp) {
-	// return fp->obj.fs == nullptr;
-	return true;
+	return (fp == nullptr || fp->fil == nullptr);
 }
 
 bool FS::f_eof(File *fp) {
-	// return fp->fptr == fp->obj.objsize;
-	return true;
+	if (fp)
+		return feof(fp->fil) != 0;
+	else
+		return false;
 }
 
 uint8_t FS::f_error(File *fp) {
-	// return fp->err;
-	return 0xFF;
+	if (fp)
+		return ferror(fp->fil);
+	else
+		return FR_INVALID_PARAMETER;
 }
 
 FSIZE_t FS::f_tell(File *fp) {
-	// return fp->fptr;
-	return 0;
+	return ftell(fp->fil);
 }
 
 FSIZE_t FS::f_size(File *fp) {
-	// return fp->obj.objsize;
-	return 0;
+	if (!fp)
+		return 0;
+
+	// Get original position
+	auto pos = std::ftell(fp);
+
+	std::fseek(fp, 0, SEEK_END);
+	auto filesize = std::ftell(fp);
+
+	// Restore original position
+	std::fseek(fp, pos, SEEK_SET);
+
+	return filesize;
 }
 
 FRESULT FS::f_rewind(File *fp) {
-	// return this->f_lseek(fp, 0);
-	return FR_INT_ERR;
+	if (!fp)
+		return FR_NO_FILE;
+
+	return fseek(fp->fil, 0, SEEK_SET) == 0 ? FR_OK : FR_INT_ERR;
 }
 
 FRESULT FS::f_rewinddir(Dir *dp) {
-	// return this->f_readdir(dp, nullptr);
+	//[NOT_IMPL]
 	return FR_INT_ERR;
 }
 
 FRESULT FS::f_rmdir(const char *path) {
-	// return this->f_unlink(path);
+	//[NOT_IMPL]
 	return FR_INT_ERR;
 }
 
