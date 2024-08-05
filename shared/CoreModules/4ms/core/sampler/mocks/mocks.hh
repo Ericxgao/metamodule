@@ -12,29 +12,12 @@ struct TrigIn : public Debouncer<0b0001, 0b1110, 0b1111> {
 	}
 };
 
-struct Button : public Toggler { //DebouncerCounter<0b01, 0b10, 0b11> {
+struct Button : public Toggler {
 	void update() {
 		steady_state_ctr++;
 	}
 
-	void sideload_set(bool newVal) {
-		register_state(newVal);
-	}
-
-	unsigned how_long_held() {
-		return steady_state_ctr;
-	}
-
-	unsigned how_long_held_pressed() {
-		return is_pressed() ? steady_state_ctr : 0;
-	}
-
-	void reset_hold_ctr() {
-		steady_state_ctr = 0;
-	}
-
-	void register_state(bool new_state) {
-
+	void sideload_set(bool new_state) {
 		if (!last_state && new_state) {
 			register_rising_edge();
 			steady_state_ctr = 0;
@@ -48,6 +31,18 @@ struct Button : public Toggler { //DebouncerCounter<0b01, 0b10, 0b11> {
 			steady_state_ctr++;
 		}
 		last_state = new_state;
+	}
+
+	unsigned how_long_held() {
+		return steady_state_ctr;
+	}
+
+	unsigned how_long_held_pressed() {
+		return is_pressed() ? steady_state_ctr : 0;
+	}
+
+	void reset_hold_ctr() {
+		steady_state_ctr = 0;
 	}
 
 	unsigned steady_state_ctr = 0;
