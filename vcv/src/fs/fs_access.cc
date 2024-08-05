@@ -182,18 +182,19 @@ FRESULT FS::f_stat(const char *path, Fileinfo *info) {
 FRESULT FS::f_opendir(Dir *dir, const char *path) {
 	auto fullpath = impl->full_path(path);
 
-	fs_trace("f_opendir(%p, %s)\n", dir, fullpath.c_str());
-	dir->dir = opendir(path);
-
-	return dir->dir == nullptr ? FR_NO_FILE : FR_OK;
+	fs_trace("[NOT IMPL] f_opendir(%p, %s)\n", dir, fullpath.c_str());
+	// dir->dir = opendir(path);
+	// return dir->dir == nullptr ? FR_NO_FILE : FR_OK;
+	return FR_INT_ERR;
 }
 
 FRESULT FS::f_closedir(Dir *dir) {
 	if (!dir)
 		return FR_INVALID_PARAMETER;
 
-	fs_trace("f_closedir(%p)\n", dir);
-	return closedir(dir->dir) == 0 ? FR_OK : FR_DISK_ERR;
+	fs_trace("[NOT IMPL] f_closedir(%p)\n", dir);
+	// return closedir(dir->dir) == 0 ? FR_OK : FR_DISK_ERR;
+	return FR_INT_ERR;
 }
 
 FRESULT FS::f_readdir(Dir *dir, Fileinfo *info) {
@@ -219,8 +220,8 @@ FRESULT FS::f_mkdir(const char *path) {
 	auto fullpath = impl->full_path(path);
 
 	if (write_access) {
-		fs_trace("f_mkdir(%s)\n", fullpath.c_str());
-		return mkdir(path, 0700) == 0 ? FR_OK : FR_INT_ERR;
+		// fs_trace("f_mkdir(%s)\n", fullpath.c_str());
+		// return mkdir(path, 0700) == 0 ? FR_OK : FR_INT_ERR;
 	}
 
 	return FR_TIMEOUT;
@@ -340,7 +341,7 @@ FRESULT FS::f_getcwd(char *buff, unsigned len) {
 }
 
 void FS::reset_dir(Dir *dp) {
-	return (dp == nullptr || dp->dir == nullptr);
+	// return (dp == nullptr || dp->dir == nullptr);
 }
 
 void FS::reset_file(File *fp) {
@@ -375,13 +376,13 @@ FSIZE_t FS::f_size(File *fp) {
 		return 0;
 
 	// Get original position
-	auto pos = std::ftell(fp);
+	auto pos = std::ftell(fp->fil);
 
-	std::fseek(fp, 0, SEEK_END);
-	auto filesize = std::ftell(fp);
+	std::fseek(fp->fil, 0, SEEK_END);
+	auto filesize = std::ftell(fp->fil);
 
 	// Restore original position
-	std::fseek(fp, pos, SEEK_SET);
+	std::fseek(fp->fil, pos, SEEK_SET);
 
 	return filesize;
 }
