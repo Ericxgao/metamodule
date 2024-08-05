@@ -22,7 +22,7 @@ struct SampleState {
 	// Whether file is totally cached (from inst_start to inst_end)
 	bool is_buffered_to_file_end[NumSamplesPerBank];
 
-	uint32_t play_buff_bufferedamt[NumSamplesPerBank];
+	uintptr_t play_buff_bufferedamt[NumSamplesPerBank];
 
 	bool cached_rev_state[NumSamplesPerBank];
 

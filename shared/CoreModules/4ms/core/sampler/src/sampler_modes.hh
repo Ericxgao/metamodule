@@ -299,7 +299,7 @@ public:
 			state.cache[samplenum].low = state.sample_file_startpos;
 			state.cache[samplenum].high = state.sample_file_startpos;
 			state.cache[samplenum].map_pt = play_buff[samplenum].min;
-			state.cache[samplenum].size = (play_buff[samplenum].size >> 1) * s_sample->sampleByteSize;
+			state.cache[samplenum].size = (play_buff[samplenum].size / 2) * s_sample->sampleByteSize;
 			state.is_buffered_to_file_end[samplenum] = 0;
 
 			params.play_state = PlayStates::PREBUFFERING;

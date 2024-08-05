@@ -120,7 +120,7 @@ public:
 		uint32_t pre_buff_amt =
 			(float)(BASE_BUFFER_THRESHOLD * s_sample->blockAlign * s_sample->numChannels) * resample_amt;
 		auto playback_buff_amt = std::clamp<uint32_t>(pre_buff_amt * 4, 0, (play_buff[samplenum].size * 7) / 10);
-		uint32_t target_buff_amt = params.play_state == PlayStates::PREBUFFERING ? pre_buff_amt : playback_buff_amt;
+		auto target_buff_amt = params.play_state == PlayStates::PREBUFFERING ? pre_buff_amt : playback_buff_amt;
 
 		// Check if the we need to load more from SD Card to the buffer
 		if (!s.is_buffered_to_file_end[samplenum] && (s.play_buff_bufferedamt[samplenum] < target_buff_amt)) {

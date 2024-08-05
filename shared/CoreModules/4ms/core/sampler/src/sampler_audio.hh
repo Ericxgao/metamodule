@@ -17,7 +17,10 @@ class SamplerAudio {
 	Flags &flags;
 	SampleList &samples;
 	std::array<CircularBuffer, NumSamplesPerBank> &play_buff;
-	ResampleState resample_state;
+	ResampleState resample_state_L;
+	ResampleState resample_state_R;
+	ResampleState resample_state_M;
+	ResampleState resample_state_A;
 
 	using ChanBuff = std::array<SamplerKit::AudioStreamConf::SampleT, SamplerKit::AudioStreamConf::BlockSize>;
 
@@ -88,16 +91,16 @@ public:
 				rs = MAX_RS / (float)s_sample.numChannels;
 
 			if (s_sample.numChannels == 2) {
-				uint32_t t_u32 = play_buff[samplenum].out;
-				resample_read<WavChan::Left>(rs, &play_buff[samplenum], outL, params.reverse, flush, resample_state);
+				auto block_start = play_buff[samplenum].out;
+				resample_read<WavChan::Left>(rs, &play_buff[samplenum], outL, params.reverse, flush, resample_state_L);
 
-				play_buff[samplenum].out = t_u32;
-				resample_read<WavChan::Right>(rs, &play_buff[samplenum], outR, params.reverse, flush, resample_state);
+				play_buff[samplenum].out = block_start;
+				resample_read<WavChan::Right>(rs, &play_buff[samplenum], outR, params.reverse, flush, resample_state_R);
 
 			} else {
 				// MONO: read left channel and copy to right
 				bool flush = flags.read(Flag::PlayBuffDiscontinuity);
-				resample_read<WavChan::Mono>(rs, &play_buff[samplenum], outL, params.reverse, flush, resample_state);
+				resample_read<WavChan::Mono>(rs, &play_buff[samplenum], outL, params.reverse, flush, resample_state_M);
 				for (unsigned i = 0; i < outL.size(); i++)
 					outR[i] = outL[i];
 			}
@@ -106,9 +109,10 @@ public:
 				rs = MAX_RS;
 
 			if (s_sample.numChannels == 2)
-				resample_read<WavChan::Average>(rs, &play_buff[samplenum], outL, params.reverse, flush, resample_state);
+				resample_read<WavChan::Average>(
+					rs, &play_buff[samplenum], outL, params.reverse, flush, resample_state_A);
 			else
-				resample_read<WavChan::Mono>(rs, &play_buff[samplenum], outL, params.reverse, flush, resample_state);
+				resample_read<WavChan::Mono>(rs, &play_buff[samplenum], outL, params.reverse, flush, resample_state_M);
 
 			for (auto &out : outR)
 				out = 0;
