@@ -23,11 +23,14 @@ private:
 	// This runs in the low-pri thread:
 	AsyncThread fs_thread{[this]() {
 		if (!index_is_loaded) {
-			printf("Loading samples from %s\n", root_dir.data());
+			printf("Loading samples from '%s'\n", root_dir.data());
 
 			sd.reload_disk(root_dir);
 
 			index_loader.load_all_banks();
+			chanL.reset();
+			chanR.reset();
+
 			index_is_loaded = true;
 		}
 

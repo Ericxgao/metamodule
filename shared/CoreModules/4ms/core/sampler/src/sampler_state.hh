@@ -30,6 +30,10 @@ struct SampleState {
 	Cache cache[NumSamplesPerBank];
 
 	SampleState() {
+		reset();
+	}
+
+	void reset() {
 		for (auto &f : fil) {
 			f.reset();
 		}
