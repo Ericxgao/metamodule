@@ -167,6 +167,10 @@ public:
 			return std::nullopt;
 	}
 
+	void reset() {
+		sampler.state.reset();
+	}
+
 private:
 	STSChanMapping mapping;
 

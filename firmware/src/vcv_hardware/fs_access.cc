@@ -38,8 +38,8 @@ FS::FS(std::string_view root)
 FS::~FS() = default;
 
 std::array<std::string_view, 2> valid_roots{
-	"1:/",
-	"2:/",
+	"0:/", //USB
+	"1:/", //SD Card
 };
 
 bool FS::find_valid_root(std::string_view path) {
@@ -50,13 +50,23 @@ bool FS::find_valid_root(std::string_view path) {
 		impl->root = root;
 		impl->cwd = "";
 
-		File file;
-		auto res = f_open(&file, path.data(), FA_READ);
-		auto res2 = f_close(&file);
-		if (res == FR_OK && res2 == FR_OK) {
-			printf("Found valid root %s\n", root.data());
-			//keep the root, restore cwd
-			impl->cwd = t_cwd;
+		bool is_valid_root = false;
+		if (path == "") {
+			// f_stat cannot open root dir, so we use f_opendir;
+			Dir dir;
+
+			auto res = f_opendir(&dir, path.data());
+			is_valid_root = (res == FR_OK);
+			f_closedir(&dir);
+		} else {
+			Fileinfo info;
+			auto res = f_stat(path.data(), &info);
+			is_valid_root = (res == FR_OK);
+		}
+
+		if (is_valid_root) {
+			impl->cwd = path;
+			printf("Found valid root %s\n", impl->full_path("").c_str());
 			return true;
 		}
 	}
@@ -172,8 +182,10 @@ char *FS::f_gets(char *buffer, int len, File *fil) {
 
 FRESULT FS::f_stat(const char *path, Fileinfo *info) {
 	auto fullpath = impl->full_path(path);
-
 	fs_trace("f_stat(%s, %p)\n", fullpath.c_str(), info);
+
+	if (!info)
+		return FR_INVALID_PARAMETER;
 
 	auto msg = IntercoreModuleFS::Stat{
 		.path = fullpath.c_str(),
