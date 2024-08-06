@@ -65,18 +65,14 @@ public:
 
 	void set_param(int param_id, float val) override {
 		if (param_id == CoreHelper<Info>::param_index<AltParamStereoMode>()) {
-			bool new_stereo_mode = val < 0.5f;
-			if (new_stereo_mode != settings.stereo_mode) {
-				settings.stereo_mode = val < 0.5f;
-				printf("Changing stereo mode to %d\n", settings.stereo_mode);
-			}
+			settings.stereo_mode = val < 0.5f;
 
 		} else if (param_id == CoreHelper<Info>::param_index<AltParamSampleDir>()) {
 			auto new_index_file = root_name(val);
 			if (new_index_file != root_dir) {
 				root_dir = new_index_file;
-				index_is_loaded = false;
-				printf("Changing index to %s (%f)\n", new_index_file.data(), val);
+				// Disable live changing root
+				// index_is_loaded = false;
 			}
 		}
 
