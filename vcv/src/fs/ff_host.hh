@@ -1,55 +1,59 @@
 #pragma once
 #include <cstdint>
 #include <cstdio>
+#include <string>
+#include <vector>
 
 namespace MetaModule
 {
 
 struct File {
 	std::FILE *fil{};
+	bool _reset = false;
 
 	File() {
 		reset();
 	}
 
 	void reset() {
-		// fil.obj.fs = nullptr;
+		fclose(fil);
+		_reset = true;
 	}
 
 	bool is_reset() {
-		return true;
-		// return fil.obj.fs == nullptr;
+		return _reset;
 	}
 };
 
 struct Fileinfo {
-	// FILINFO filinfo;
+	std::string filename;
+	size_t filesize;
+	enum class EntryType { Invalid, Dir, File } type{EntryType::Invalid};
 
 	const char *fname() {
-		return "";
-		// return filinfo.fname;
+		return filename.c_str();
 	}
 
 	bool is_dir() {
-		return false;
-		// return filinfo.fattrib & AM_DIR;
+		return type == EntryType::Dir;
 	}
 };
 
 struct Dir {
-	// DIR dir{};
+	std::string path;
+	std::vector<std::string> entries;
+	size_t pos = 0;
 
 	Dir() {
 		reset();
 	}
 
 	void reset() {
-		// dir.obj.fs = nullptr;
+		path.clear();
 	}
 
 	bool is_reset() {
-		return true;
-		// return dir.obj.fs == nullptr;
+		return (path.length() == 0);
 	}
 };
 
@@ -100,65 +104,4 @@ enum {
 };
 
 #define FF_MAX_LFN 255
-#define FF_LFN_BUF 255
-
-// /* Fast seek controls (2nd argument of f_lseek) */
-// #define CREATE_LINKMAP ((FSIZE_t)0 - 1)
-
-// struct FATFS;
-
-// typedef struct {
-// 	FATFS *fs; /* Pointer to the hosting volume of this object */
-// 	WORD id;   /* Hosting volume mount ID */
-// 	BYTE attr; /* Object attribute */
-// 	BYTE
-// 		stat; /* Object chain status (b1-0: =0:not contiguous, =2:contiguous, =3:fragmented in this session, b2:sub-directory stretched) */
-// 	DWORD sclust;	 /* Object data start cluster (0:no cluster or root directory) */
-// 	FSIZE_t objsize; /* Object size (valid when sclust != 0) */
-// 	DWORD n_cont;	 /* Size of first fragment - 1 (valid when stat == 3) */
-// 	DWORD n_frag;	 /* Size of last fragment needs to be written to FAT (valid when not zero) */
-// 	DWORD c_scl;	 /* Containing directory start cluster (valid when sclust != 0) */
-// 	DWORD c_size;	 /* b31-b8:Size of containing directory, b7-b0: Chain status (valid when c_scl != 0) */
-// 	DWORD c_ofs;	 /* Offset in the containing directory (valid when file object and sclust != 0) */
-// #if FF_FS_LOCK
-// 	UINT lockid; /* File lock ID origin from 1 (index of file semaphore table Files[]) */
-// #endif
-// } FFOBJID;
-
-// typedef struct {
-// 	FFOBJID obj;		 /* Object identifier (must be the 1st member to detect invalid object pointer) */
-// 	BYTE flag;			 /* File status flags */
-// 	BYTE err;			 /* Abort flag (error code) */
-// 	FSIZE_t fptr;		 /* File read/write pointer (Zeroed on file open) */
-// 	DWORD clust;		 /* Current cluster of fpter (invalid when fptr is 0) */
-// 	LBA_t sect;			 /* Sector number appearing in buf[] (0:invalid) */
-// 	LBA_t dir_sect;		 /* Sector number containing the directory entry (not used at exFAT) */
-// 	BYTE *dir_ptr;		 /* Pointer to the directory entry in the win[] (not used at exFAT) */
-// 	DWORD *cltbl;		 /* Pointer to the cluster link map table (nulled on open, set by application) */
-// 	BYTE buf[FF_MAX_SS]; /* File private data read/write window */
-// } FIL;
-
-// typedef struct {
-// 	FFOBJID	obj;			/* Object identifier */
-// 	DWORD	dptr;			/* Current read/write offset */
-// 	DWORD	clust;			/* Current cluster */
-// 	LBA_t	sect;			/* Current sector (0:Read operation has terminated) */
-// 	BYTE*	dir;			/* Pointer to the directory item in the win[] */
-// 	BYTE	fn[12];			/* SFN (in/out) {body[8],ext[3],status[1]} */
-// 	DWORD	blk_ofs;		/* Offset of current entry block being processed (0xFFFFFFFF:Invalid) */
-// #if FF_USE_FIND
-// 	const TCHAR* pat;		/* Pointer to the name matching pattern */
-// #endif
-// } DIR;
-
-// #define FF_SFN_BUF 12
 // #define FF_LFN_BUF 255
-
-// typedef struct {
-// 	FSIZE_t fsize;				   /* File size */
-// 	WORD fdate;					   /* Modified date */
-// 	WORD ftime;					   /* Modified time */
-// 	BYTE fattrib;				   /* File attribute */
-// 	TCHAR altname[FF_SFN_BUF + 1]; /* Altenative file name */
-// 	TCHAR fname[FF_LFN_BUF + 1];   /* Primary file name */
-// } FILINFO;

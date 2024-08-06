@@ -11,8 +11,11 @@ extern rack::plugin::Plugin *pluginInstance;
 namespace MetaModule
 {
 
-static constexpr bool print_fs_calls = true;
 static constexpr bool write_access = false;
+
+// Debug to console:
+static constexpr bool print_fs_calls = true;
+static constexpr bool print_dump_fs_calls = true;
 
 static inline void fs_trace(const char *str) {
 	if constexpr (print_fs_calls)
@@ -24,6 +27,16 @@ static inline void fs_trace(auto... args) {
 		printf(args...);
 }
 
+static inline void fs_dump(const char *str) {
+	if constexpr (print_dump_fs_calls)
+		printf("%s", str);
+}
+
+static inline void fs_dump(auto... args) {
+	if constexpr (print_dump_fs_calls)
+		printf(args...);
+}
+
 FS::FS(std::string_view root)
 	: impl{new Impl(root)} {
 }
@@ -32,36 +45,27 @@ FS::~FS() = default;
 
 // Valid Root
 
-bool FS::find_valid_root(std::string_view path) {
-	std::string userdir = rack::asset::user("");
-	std::string userdir2 = rack::asset::plugin(pluginInstance, "");
-
+bool FS::find_valid_root(std::string_view filename) {
 	std::array<std::string, 2> valid_roots{
-		userdir,
-		userdir2,
+		rack::asset::user(""),
+		rack::asset::plugin(pluginInstance, ""),
 	};
 
-	auto t_root = impl->root;
-	auto t_cwd = impl->cwd;
-
 	for (auto root : valid_roots) {
-		impl->root = root;
-		impl->cwd = "./";
+		const std::string filepath = root + std::string{filename};
 
-		File file;
-		auto res = f_open(&file, path.data(), FA_READ);
-		f_close(&file);
-		if (res == FR_OK) {
-			printf("Found valid root %s\n", root.data());
-			//keep the root, restore cwd
-			impl->cwd = t_cwd;
+		if (rack::system::isFile(filepath) || rack::system::isDirectory(filepath)) {
+			printf("Found valid root %s\n", filepath.c_str());
+
+			//keep the root
+			impl->root = root;
 			return true;
 		}
+
+		else
+			printf("Not a file or dir: %s\n", filepath.c_str());
 	}
 
-	// no valid root found. restore previous values
-	impl->root = t_root;
-	impl->cwd = t_cwd;
 	printf("No valid root found\n");
 
 	return false;
@@ -96,7 +100,7 @@ FRESULT FS::f_open(File *fp, const char *path, uint8_t mode) {
 }
 
 FRESULT FS::f_close(File *fil) {
-	fs_trace("f_close(%p)\n", fil);
+	fs_dump("f_close(%p)\n", fil);
 
 	auto res = std::fclose(fil->fil);
 	if (res == 0)
@@ -111,7 +115,7 @@ FRESULT FS::f_lseek(File *fil, uint64_t offset) {
 		return FR_OK;
 	}
 
-	fs_trace("f_lseek(%p, %llu)\n", fil, offset);
+	fs_dump("f_lseek(%p, %llu)\n", fil, offset);
 
 	auto res = std::fseek(fil->fil, offset, SEEK_SET);
 
@@ -119,7 +123,7 @@ FRESULT FS::f_lseek(File *fil, uint64_t offset) {
 }
 
 FRESULT FS::f_read(File *fil, void *buff, unsigned bytes_to_read, unsigned *br) {
-	fs_trace("f_read(%p, %p, %u, ...)\n", fil, buff, bytes_to_read);
+	fs_dump("f_read(%p, %p, %u, ...)\n", fil, buff, bytes_to_read);
 
 	auto bytes_read = std::fread(buff, 1, bytes_to_read, fil->fil);
 	*br = bytes_read;
@@ -131,85 +135,118 @@ FRESULT FS::f_read(File *fil, void *buff, unsigned bytes_to_read, unsigned *br) 
 }
 
 char *FS::f_gets(char *buffer, int len, File *fil) {
-	fs_trace("f_gets(%p, %d, %p)\n", buffer, len, fil);
+	fs_dump("f_gets(%p, %d, %p)\n", buffer, len, fil);
 
 	return std::fgets(buffer, len, fil->fil);
 }
 
 FRESULT FS::f_stat(const char *path, Fileinfo *info) {
+	auto fullpath = impl->full_path(path);
+	fs_dump("f_stat(%s, %p)\n", fullpath.c_str(), info);
+
 	if (info == nullptr)
 		return FR_INVALID_PARAMETER;
 
-	auto fullpath = impl->full_path(path);
+	if (rack::system::isFile(path)) {
+		info->filename = path;
+		info->filesize = rack::system::getFileSize(path);
+		info->type = Fileinfo::EntryType::File;
+		return FR_OK;
 
-	fs_trace("[NOT IMPL] f_stat(%s, %p)\n", fullpath.c_str(), info);
+	} else if (rack::system::isDirectory(path)) {
+		info->filename = path;
+		info->filesize = 0;
+		info->type = Fileinfo::EntryType::Dir;
+		return FR_OK;
 
-	// stat p_stat;
-
-	// info->fsize = buf->st_size = info.fsize;
-	// epoch = fat_time_to_unix(info.fdate, info.ftime);
-	// buf->st_atime = epoch;                        // Access time
-	// buf->st_mtime = epoch;                        // Modification time
-	// buf->st_ctime = epoch;                        // Creation time
-
-	// // We only handle read only case
-	// mode = (FATFS_R | FATFS_X);
-	// if( !(info.fattrib & AM_RDO))
-	// mode |= (FATFS_W);                        // enable write if NOT read only
-
-	// if(info.fattrib & AM_SYS)
-	// {
-	// buf->st_uid= 0;
-	// buf->st_gid= 0;
-	// }
-	// {
-	// buf->st_uid=1000;
-	// buf->st_gid=1000;
-	// }
-
-	// if(info.fattrib & AM_DIR)
-	// mode |= S_IFDIR;
-	// else
-	// mode |= S_IFREG;
-	// buf->st_mode = mode;
-
-	return FR_TIMEOUT;
+	} else {
+		return FR_NO_PATH;
+	}
 }
 
 // DIRS (READ-ONLY)
 
 FRESULT FS::f_opendir(Dir *dir, const char *path) {
 	auto fullpath = impl->full_path(path);
+	fs_trace("f_opendir(%p, %s)\n", dir, fullpath.c_str());
 
-	fs_trace("[NOT IMPL] f_opendir(%p, %s)\n", dir, fullpath.c_str());
-	// dir->dir = opendir(path);
-	// return dir->dir == nullptr ? FR_NO_FILE : FR_OK;
-	return FR_INT_ERR;
-}
-
-FRESULT FS::f_closedir(Dir *dir) {
 	if (!dir)
 		return FR_INVALID_PARAMETER;
 
-	fs_trace("[NOT IMPL] f_closedir(%p)\n", dir);
-	// return closedir(dir->dir) == 0 ? FR_OK : FR_DISK_ERR;
-	return FR_INT_ERR;
+	if (rack::system::isDirectory(path)) {
+		dir->path = path;
+		dir->pos = 0;
+		dir->entries = rack::system::getEntries(path, 0);
+		return FR_OK;
+	}
+
+	return FR_NO_PATH;
+}
+
+FRESULT FS::f_closedir(Dir *dir) {
+	fs_dump("f_closedir(%p)\n", dir);
+
+	if (!dir)
+		return FR_INVALID_PARAMETER;
+
+	dir->entries.clear();
+	return FR_OK;
 }
 
 FRESULT FS::f_readdir(Dir *dir, Fileinfo *info) {
-	fs_trace("[NOT IMPL] f_readdir(%p, %p)\n", dir, info);
-	return FR_TIMEOUT;
+	fs_trace("f_readdir(%p, %p)\n", dir, info);
+
+	if (!dir)
+		return FR_INVALID_PARAMETER;
+
+	// "When a null pointer is given to the info, the read index of the directory object is rewound"
+	if (!info) {
+		dir->pos = 0;
+		return FR_OK;
+	}
+
+	// "When all items in the directory have been read and no item to read, a null string is stored into the fno->fname[] without an error."
+	if (dir->pos >= dir->entries.size()) {
+		info->filename[0] = '\0';
+		return FR_OK;
+	}
+
+	info->filename = dir->entries[dir->pos];
+	info->filesize = rack::system::getFileSize(info->filename);
+
+	// Increment so that the next call to f_readdir() returns info about the next entry
+	dir->pos++;
+	return FR_OK;
 }
 
 FRESULT FS::f_findfirst(Dir *dir, Fileinfo *info, const char *path, const char *pattern) {
 	auto fullpath = impl->full_path(path);
 	fs_trace("[NOT IMPL] f_findfirst(%p, %p, %s, %s)\n", dir, info, fullpath.c_str(), pattern);
 
-	return FR_TIMEOUT;
+	if (auto res = f_opendir(dir, path); res != FR_OK)
+		return res;
+
+	if (!info)
+		return FR_INVALID_PARAMETER;
+
+	// TODO:
+	// dir->pos = 0;
+	// for (auto &entry : dir->entries) {
+	// 	if (regex_match(entry, pattern)) {
+	// 		info->filename = entry;
+	// 		info->filesize = rack::system::getFileSize(entry);
+	// 		return FR_OK;
+	// 	}
+	// 	dir->pos++;
+	// }
+
+	return FR_INT_ERR;
 }
 
 FRESULT FS::f_findnext(Dir *dir, Fileinfo *info) {
 	fs_trace("[NOT IMPL] f_findnext %p\n", dir);
+	// TODO:
+	// 	dir->pos++;
 	return FR_TIMEOUT;
 }
 
@@ -340,16 +377,20 @@ FRESULT FS::f_getcwd(char *buff, unsigned len) {
 }
 
 void FS::reset_dir(Dir *dp) {
-	// return (dp == nullptr || dp->dir == nullptr);
+	if (dp)
+		dp->reset();
 }
 
 void FS::reset_file(File *fp) {
-	// fp->obj.fs = nullptr;
-	// fp->cltbl = nullptr;
+	if (fp)
+		fp->reset();
 }
 
 bool FS::is_file_reset(File *fp) {
-	return (fp == nullptr || fp->fil == nullptr);
+	if (fp)
+		return fp->is_reset();
+	else
+		return true;
 }
 
 bool FS::f_eof(File *fp) {
