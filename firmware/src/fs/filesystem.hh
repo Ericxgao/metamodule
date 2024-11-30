@@ -14,14 +14,14 @@ class Filesystem {
 	static inline FatFileIO *mRamdisk{nullptr};
 
 public:
-	static void Init(FatFileIO &ramdisk) {
+	static void init(FatFileIO &ramdisk) {
 		mRamdisk = &ramdisk;
 		for (auto &d : descriptors) {
 			d = nullptr;
 		}
 	}
 
-	static int open(const char *filename) {
+	static int open(const char *filename, int flags, int mode) {
 		if (mRamdisk == nullptr) {
 			return -1;
 		}

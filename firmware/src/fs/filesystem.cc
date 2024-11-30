@@ -4,7 +4,7 @@
 
 extern "C" {
 int _open(const char *filename, int flags, int mode) {
-	return MetaModule::Filesystem::open(filename);
+	return MetaModule::Filesystem::open(filename, flags, mode);
 }
 
 int _close(int fd) {

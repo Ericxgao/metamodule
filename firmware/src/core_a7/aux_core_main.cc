@@ -47,7 +47,7 @@ extern "C" void aux_core_main() {
 	RamDiskOps ramdisk_ops{*ramdisk_storage};
 	FatFileIO ramdisk{&ramdisk_ops, Volume::RamDisk};
 	AssetFS asset_fs{AssetVolFlashOffset};
-	Filesystem::Init(ramdisk);
+	Filesystem::init(ramdisk);
 	PluginManager plugin_manager{*file_storage_proxy, ramdisk};
 	Ui ui{*patch_playloader, *file_storage_proxy, *open_patch_manager, *sync_params, *patch_mod_queue, plugin_manager};
 	ui.update_screen();
