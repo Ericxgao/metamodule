@@ -20,16 +20,9 @@ extern std::array<uint8_t, 64 * 1024> module_fs_buffer_core0;
 extern std::array<uint8_t, 64 * 1024> module_fs_buffer_core1;
 } // namespace StaticBuffers
 
-struct FSProxy {
-public:
-	// Put these in separate place?
-	std::string root;
-	std::string cwd;
+struct FSProxyImpl {
 
-	FSProxy(std::string_view root)
-		: root{root} {
-	}
-
+	// Returns a span to the buffer for the current core
 	std::span<char> file_buffer() {
 		auto &backing_buffer =
 			core() == 1 ? StaticBuffers::module_fs_buffer_core1 : StaticBuffers::module_fs_buffer_core0;
@@ -75,10 +68,6 @@ public:
 		}
 
 		return {};
-	}
-
-	std::string full_path(const char *path) {
-		return root + cwd + path;
 	}
 
 private:

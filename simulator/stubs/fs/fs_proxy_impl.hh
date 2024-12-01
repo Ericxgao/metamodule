@@ -1,11 +1,12 @@
 #pragma once
 #include "CoreModules/fs_access.hh"
 #include <string>
+#include <string_view>
 
 namespace MetaModule
 {
 
-struct FS::Impl {
+struct FSProxyImpl {
 	std::string root;
 	std::string cwd;
 

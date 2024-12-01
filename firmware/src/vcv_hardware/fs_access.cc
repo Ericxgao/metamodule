@@ -32,7 +32,7 @@ static inline void fs_trace(auto... args) {
 }
 
 FS::FS(std::string_view root)
-	: impl{new Impl(root)} {
+	: impl{new FSProxyImpl()} {
 }
 
 FS::~FS() = default;
@@ -43,12 +43,12 @@ std::array<std::string_view, 2> valid_roots{
 };
 
 bool FS::find_valid_root(std::string_view path) {
-	auto t_root = impl->root;
-	auto t_cwd = impl->cwd;
+	auto t_root = root;
+	auto t_cwd = cwd;
 
-	for (auto root : valid_roots) {
-		impl->root = root;
-		impl->cwd = "";
+	for (auto rt : valid_roots) {
+		root = rt;
+		cwd = "";
 
 		bool is_valid_root = false;
 		if (path == "") {
@@ -59,30 +59,34 @@ bool FS::find_valid_root(std::string_view path) {
 			is_valid_root = (res == FR_OK);
 			f_closedir(&dir);
 		} else {
-			Fileinfo info;
+			Fileinfo info{};
 			auto res = f_stat(path.data(), &info);
 			is_valid_root = (res == FR_OK);
 		}
 
 		if (is_valid_root) {
-			impl->cwd = path;
-			printf("Found valid root %s\n", impl->full_path("").c_str());
+			cwd = path;
+			printf("Found valid root %s\n", full_path("").c_str());
 			return true;
 		}
 	}
 
 	// no valid root found. restore previous values
-	impl->root = t_root;
-	impl->cwd = t_cwd;
+	root = t_root;
+	cwd = t_cwd;
 	printf("No valid root found\n");
 
 	return false;
 }
 
+std::string FS::full_path(const char *path) {
+	return root + cwd + path;
+}
+
 // READING
 
 FRESULT FS::f_open(File *fp, const char *path, uint8_t mode) {
-	auto fullpath = impl->full_path(path);
+	auto fullpath = full_path(path);
 
 	if (!write_access)
 		mode &= ~(FA_WRITE | FA_CREATE_NEW | FA_CREATE_ALWAYS | FA_OPEN_APPEND);
@@ -90,13 +94,13 @@ FRESULT FS::f_open(File *fp, const char *path, uint8_t mode) {
 	fs_trace("f_open(%p, \"%s\", %d)\n", fp, fullpath.c_str(), mode);
 
 	auto msg = IntercoreModuleFS::Open{
-		.fil = fp->fil,
+		.fil = &fp->fil,
 		.path = std::string_view{fullpath},
 		.access_mode = mode,
 	};
 
 	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Open>(msg, 3000)) {
-		fp->fil = response->fil; //copy FIL back
+		// fp->fil = response->fil; //copy FIL back
 		return response->res;
 	}
 
@@ -122,12 +126,12 @@ FRESULT FS::f_lseek(File *fil, uint64_t offset) {
 	fs_trace("f_lseek(%p, %lld)\n", fil, offset);
 
 	auto msg = IntercoreModuleFS::Seek{
-		.fil = fil->fil,
+		.fil = &fil->fil,
 		.file_offset = offset,
 	};
 
 	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Seek>(msg, 3000)) {
-		fil->fil = response->fil; //copy File back
+		// fil->fil = response->fil; //copy File back
 		return response->res;
 	}
 
@@ -137,18 +141,18 @@ FRESULT FS::f_lseek(File *fil, uint64_t offset) {
 FRESULT FS::f_read(File *fil, void *buff, unsigned bytes_to_read, unsigned *br) {
 	fs_trace("f_read(%p, %p, %u, ...)\n", fil, buff, bytes_to_read);
 
-	if (bytes_to_read > impl->file_buffer.size()) {
+	if (bytes_to_read > impl->file_buffer().size()) {
 		pr_err("Cannot f_read %d bytes\n", bytes_to_read);
 		return FR_NOT_ENOUGH_CORE;
 	}
 
 	auto msg = IntercoreModuleFS::Read{
-		.fil = fil->fil,
-		.buffer = impl->file_buffer.subspan(0, bytes_to_read),
+		.fil = &fil->fil,
+		.buffer = impl->file_buffer().subspan(0, bytes_to_read),
 	};
 
 	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Read>(msg, 3000)) {
-		fil->fil = response->fil;
+		// fil->fil = response->fil;
 		*br = response->bytes_read;
 		std::copy(response->buffer.begin(), std::next(response->buffer.begin(), response->bytes_read), (char *)buff);
 
@@ -160,14 +164,14 @@ FRESULT FS::f_read(File *fil, void *buff, unsigned bytes_to_read, unsigned *br) 
 char *FS::f_gets(char *buffer, int len, File *fil) {
 	fs_trace("f_gets(%p, %d, %p)\n", buffer, len, fil);
 
-	if ((size_t)len > impl->file_buffer.size()) {
+	if ((size_t)len > impl->file_buffer().size()) {
 		pr_err("Cannot f_gets %d bytes\n", len);
 		return nullptr;
 	}
 
 	auto msg = IntercoreModuleFS::GetS{
 		.fil = fil->fil,
-		.buffer = impl->file_buffer.subspan(0, len),
+		.buffer = impl->file_buffer().subspan(0, len),
 	};
 
 	auto response = impl->get_response_or_timeout<IntercoreModuleFS::GetS>(msg, 3000);
@@ -181,7 +185,7 @@ char *FS::f_gets(char *buffer, int len, File *fil) {
 }
 
 FRESULT FS::f_stat(const char *path, Fileinfo *info) {
-	auto fullpath = impl->full_path(path);
+	auto fullpath = full_path(path);
 	fs_trace("f_stat(%s, %p)\n", fullpath.c_str(), info);
 
 	if (!info)
@@ -203,7 +207,7 @@ FRESULT FS::f_stat(const char *path, Fileinfo *info) {
 // DIRS (READ-ONLY)
 
 FRESULT FS::f_opendir(Dir *dir, const char *path) {
-	auto fullpath = impl->full_path(path);
+	auto fullpath = full_path(path);
 
 	fs_trace("f_opendir(%p, %s)\n", dir, fullpath.c_str());
 
@@ -252,7 +256,7 @@ FRESULT FS::f_readdir(Dir *dir, Fileinfo *info) {
 }
 
 FRESULT FS::f_findfirst(Dir *dir, Fileinfo *info, const char *path, const char *pattern) {
-	auto fullpath = impl->full_path(path);
+	auto fullpath = full_path(path);
 
 	fs_trace("f_findfirst(%p, %p, %s, %s)\n", dir, info, fullpath.c_str(), pattern);
 
@@ -292,7 +296,7 @@ FRESULT FS::f_findnext(Dir *dir, Fileinfo *info) {
 // CREATE DIR
 
 FRESULT FS::f_mkdir(const char *path) {
-	auto fullpath = impl->full_path(path);
+	auto fullpath = full_path(path);
 
 	fs_trace("f_mkdir(%s)\n", fullpath.c_str());
 
@@ -368,7 +372,7 @@ FRESULT FS::f_expand(File *fp, uint64_t fsz, uint8_t opt) {
 // OTHER (write-access)
 
 FRESULT FS::f_unlink(const char *path) {
-	auto fullpath = impl->full_path(path);
+	auto fullpath = full_path(path);
 
 	fs_trace("f_unlink(%s)\n", fullpath.c_str());
 
@@ -378,8 +382,8 @@ FRESULT FS::f_unlink(const char *path) {
 }
 
 FRESULT FS::f_rename(const char *path_old, const char *path_new) {
-	auto fullpath_old = impl->full_path(path_old);
-	auto fullpath_new = impl->full_path(path_new);
+	auto fullpath_old = full_path(path_old);
+	auto fullpath_new = full_path(path_new);
 
 	fs_trace("f_rename(%s, %s)\n", path_old, path_new);
 	if (write_access) {
@@ -388,7 +392,7 @@ FRESULT FS::f_rename(const char *path_old, const char *path_new) {
 }
 
 FRESULT FS::f_utime(const char *path, const Fileinfo *fno) {
-	auto fullpath = impl->full_path(path);
+	auto fullpath = full_path(path);
 
 	fs_trace("f_utime(%s)\n", fullpath.c_str());
 
@@ -403,7 +407,7 @@ FRESULT FS::f_chdir(const char *path) {
 	fs_trace("f_chdir(%s)\n", path);
 
 	//TODO: ensure ends in a slash
-	impl->cwd = path;
+	cwd = path;
 
 	return FR_OK;
 }
@@ -414,7 +418,6 @@ FRESULT FS::f_getcwd(char *buff, unsigned len) {
 	if (buff == nullptr)
 		return FR_INVALID_PARAMETER;
 
-	auto &cwd = impl->cwd;
 	auto sz = std::min(len, cwd.size());
 	std::copy(cwd.begin(), std::next(cwd.begin(), sz), buff);
 
