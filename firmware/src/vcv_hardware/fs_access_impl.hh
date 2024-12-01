@@ -20,14 +20,14 @@ extern std::array<uint8_t, 64 * 1024> module_fs_buffer_core0;
 extern std::array<uint8_t, 64 * 1024> module_fs_buffer_core1;
 } // namespace StaticBuffers
 
-struct FS::Impl {
+struct FSProxy {
 public:
 	// Put these in separate place?
 	std::string root;
 	std::string cwd;
 	std::span<char> file_buffer;
 
-	Impl(std::string_view root)
+	FSProxy(std::string_view root)
 		: root{root} {
 
 		auto &backing_buffer =

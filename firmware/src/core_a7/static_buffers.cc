@@ -25,6 +25,8 @@ __attribute__((section(".ddma"))) std::array<char, 1024 * 1024> raw_patch_data;
 __attribute__((section(".ddma"))) IntercoreStorageMessage icc_shared_message;
 __attribute__((section(".ddma"))) IntercoreModuleFS::Message icc_module_fs_message_core0;
 __attribute__((section(".ddma"))) IntercoreModuleFS::Message icc_module_fs_message_core1;
+__attribute__((section(".ddma"))) std::array<uint8_t, 64 * 1024> module_fs_buffer_core0;
+__attribute__((section(".ddma"))) std::array<uint8_t, 64 * 1024> module_fs_buffer_core1;
 
 __attribute__((section(".ddma"))) PatchDirList patch_dir_list;
 

@@ -21,6 +21,8 @@ extern std::array<char, 1024 * 1024> raw_patch_data;
 extern IntercoreStorageMessage icc_shared_message;
 extern IntercoreModuleFS::Message icc_module_fs_message_core0;
 extern IntercoreModuleFS::Message icc_module_fs_message_core1;
+extern std::array<uint8_t, 64 * 1024> module_fs_buffer_core0;
+extern std::array<uint8_t, 64 * 1024> module_fs_buffer_core1;
 extern PatchDirList patch_dir_list;
 extern DoubleBufParamBlock param_blocks;
 extern SyncParams sync_params;
