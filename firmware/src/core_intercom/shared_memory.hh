@@ -1,17 +1,13 @@
 #pragma once
 #include "conf/ramdisk_conf.hh"
 #include "console/concurrent_buffer.hh"
+#include "intercore_modulefs_message.hh"
 #include "params/param_block.hh"
 
 namespace MetaModule
 {
 //fwd declare to reduce dependencies
 class IntercoreStorageMessage;
-
-namespace IntercoreModuleFS
-{
-class Message;
-}
 
 //TODO: Move this structure to static_buffers.hh and declare static inline ptrs there too
 struct SharedMemoryS {
