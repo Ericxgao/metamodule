@@ -25,15 +25,16 @@ public:
 	// Put these in separate place?
 	std::string root;
 	std::string cwd;
-	std::span<char> file_buffer;
 
 	FSProxy(std::string_view root)
 		: root{root} {
+	}
 
+	std::span<char> file_buffer() {
 		auto &backing_buffer =
 			core() == 1 ? StaticBuffers::module_fs_buffer_core1 : StaticBuffers::module_fs_buffer_core0;
 
-		file_buffer = {(char *)backing_buffer.data(), backing_buffer.size()};
+		return {(char *)backing_buffer.data(), backing_buffer.size()};
 	}
 
 	template<typename ResponseT>
