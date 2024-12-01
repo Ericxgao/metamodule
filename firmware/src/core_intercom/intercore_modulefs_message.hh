@@ -14,20 +14,21 @@ namespace IntercoreModuleFS
 
 struct None {};
 
+// FIXME: why were are the FIL members FIL, not FIL*?
 struct Open {
-	FIL fil{};
+	FIL *fil{};
 	StaticString<255> path;
 	uint8_t access_mode{};
 	FRESULT res{};
 };
 
 struct Close {
-	FIL fil{};
+	FIL *fil{};
 	FRESULT res{};
 };
 
 struct Read {
-	FIL fil{};
+	FIL *fil{};
 	std::span<char> buffer;
 	uint32_t bytes_read{};
 	FRESULT res{};
@@ -41,7 +42,7 @@ struct GetS {
 };
 
 struct Seek {
-	FIL fil{};
+	FIL *fil{};
 	uint64_t file_offset{};
 	FRESULT res{};
 };
