@@ -209,6 +209,7 @@ target_include_directories(
           ${FWDIR}/src/console
           ${FWDIR}/src/params
           ${FWDIR}/src/vcv_hardware
+          ${FWDIR}/src/fs
           ${FWDIR}/src/core_a7
           ${FWDIR}/src/medium
           ${FWDIR}/lib/mdrivlib
