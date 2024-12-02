@@ -102,7 +102,6 @@ add_subdirectory(${FWDIR}/lib/CoreModules CoreModules)
 #
 add_executable(
   main.elf
-  ${FWDIR}/src/fs/filesystem.cc
   ${FWDIR}/system/libc_stub.c
   ${FWDIR}/system/libcpp_stub.cc
   ${FWDIR}/system/new.cc
@@ -114,7 +113,6 @@ add_executable(
   ${FWDIR}/src/core_a7/a7_shared_memory.cc
   ${FWDIR}/src/core_a7/gettimeofday.cc
   ${FWDIR}/src/core_a7/async_thread.cc
-  ${FWDIR}/src/core_a7/fs_proxy.cc
   ${FWDIR}/src/core_a7/main.cc
   ${FWDIR}/src/core_a7/static_buffers.cc
   ${FWDIR}/src/core_a7/aux_core_main.cc
@@ -132,6 +130,11 @@ add_executable(
   ${FWDIR}/src/midi/midi_router.cc
   ${FWDIR}/src/params/expanders.cc
   ${FWDIR}/src/patch_play/patch_player_catchup.cc
+
+  #
+  ${FWDIR}/src/fs/syscall/fs_proxy.cc
+  ${FWDIR}/src/fs/syscall/syscalls.cc
+  ${FWDIR}/src/fs/syscall/filedesc_manager.cc
 
   #
   ${FWDIR}/src/dynload/dynloader.cc
