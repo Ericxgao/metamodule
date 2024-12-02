@@ -1,8 +1,8 @@
-#include "CoreModules/fs_access.hh"
+#include "CoreModules/fatfs_adaptor.hh"
 #include "console/pr_dbg.hh"
 #include "core_intercom/intercore_modulefs_message.hh"
 #include "drivers/inter_core_comm.hh"
-#include "fs_access_impl.hh"
+#include "fs_proxy_impl.hh"
 #include "util/padded_aligned.hh"
 #include <cstdarg>
 #include <cstring>
@@ -31,18 +31,18 @@ static inline void fs_trace(auto... args) {
 		printf(args...);
 }
 
-FS::FS(std::string_view root)
+FatFS::FatFS(std::string_view root)
 	: impl{new FSProxyImpl()} {
 }
 
-FS::~FS() = default;
+FatFS::~FatFS() = default;
 
 std::array<std::string_view, 2> valid_roots{
 	"0:/", //USB
 	"1:/", //SD Card
 };
 
-bool FS::find_valid_root(std::string_view path) {
+bool FatFS::find_valid_root(std::string_view path) {
 	auto t_root = root;
 	auto t_cwd = cwd;
 
@@ -79,13 +79,13 @@ bool FS::find_valid_root(std::string_view path) {
 	return false;
 }
 
-std::string FS::full_path(const char *path) {
+std::string FatFS::full_path(const char *path) {
 	return root + cwd + path;
 }
 
 // READING
 
-FRESULT FS::f_open(File *fp, const char *path, uint8_t mode) {
+FRESULT FatFS::f_open(File *fp, const char *path, uint8_t mode) {
 	auto fullpath = full_path(path);
 
 	if (!write_access)
@@ -107,22 +107,22 @@ FRESULT FS::f_open(File *fp, const char *path, uint8_t mode) {
 	return FR_TIMEOUT;
 }
 
-FRESULT FS::f_close(File *fil) {
+FRESULT FatFS::f_close(File *fil) {
 	fs_trace("f_close(%p)\n", fil);
 
 	auto msg = IntercoreModuleFS::Close{
-		.fil = fil->fil,
+		.fil = &fil->fil,
 	};
 
 	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Close>(msg, 3000)) {
-		fil->fil = response->fil;
+		// fil->fil = response->fil;
 		return response->res;
 	}
 
 	return FR_TIMEOUT;
 }
 
-FRESULT FS::f_lseek(File *fil, uint64_t offset) {
+FRESULT FatFS::f_lseek(File *fil, uint64_t offset) {
 	fs_trace("f_lseek(%p, %lld)\n", fil, offset);
 
 	auto msg = IntercoreModuleFS::Seek{
@@ -138,7 +138,7 @@ FRESULT FS::f_lseek(File *fil, uint64_t offset) {
 	return FR_TIMEOUT;
 }
 
-FRESULT FS::f_read(File *fil, void *buff, unsigned bytes_to_read, unsigned *br) {
+FRESULT FatFS::f_read(File *fil, void *buff, unsigned bytes_to_read, unsigned *br) {
 	fs_trace("f_read(%p, %p, %u, ...)\n", fil, buff, bytes_to_read);
 
 	if (bytes_to_read > impl->file_buffer().size()) {
@@ -161,7 +161,7 @@ FRESULT FS::f_read(File *fil, void *buff, unsigned bytes_to_read, unsigned *br) 
 	return FR_TIMEOUT;
 }
 
-char *FS::f_gets(char *buffer, int len, File *fil) {
+char *FatFS::f_gets(char *buffer, int len, File *fil) {
 	fs_trace("f_gets(%p, %d, %p)\n", buffer, len, fil);
 
 	if ((size_t)len > impl->file_buffer().size()) {
@@ -184,7 +184,7 @@ char *FS::f_gets(char *buffer, int len, File *fil) {
 	return nullptr;
 }
 
-FRESULT FS::f_stat(const char *path, Fileinfo *info) {
+FRESULT FatFS::f_stat(const char *path, Fileinfo *info) {
 	auto fullpath = full_path(path);
 	fs_trace("f_stat(%s, %p)\n", fullpath.c_str(), info);
 
@@ -206,7 +206,7 @@ FRESULT FS::f_stat(const char *path, Fileinfo *info) {
 
 // DIRS (READ-ONLY)
 
-FRESULT FS::f_opendir(Dir *dir, const char *path) {
+FRESULT FatFS::f_opendir(Dir *dir, const char *path) {
 	auto fullpath = full_path(path);
 
 	fs_trace("f_opendir(%p, %s)\n", dir, fullpath.c_str());
@@ -224,7 +224,7 @@ FRESULT FS::f_opendir(Dir *dir, const char *path) {
 	return FR_TIMEOUT;
 }
 
-FRESULT FS::f_closedir(Dir *dir) {
+FRESULT FatFS::f_closedir(Dir *dir) {
 	fs_trace("f_closedir(%p)\n", dir);
 
 	auto msg = IntercoreModuleFS::CloseDir{
@@ -239,7 +239,7 @@ FRESULT FS::f_closedir(Dir *dir) {
 	return FR_TIMEOUT;
 }
 
-FRESULT FS::f_readdir(Dir *dir, Fileinfo *info) {
+FRESULT FatFS::f_readdir(Dir *dir, Fileinfo *info) {
 	fs_trace("f_readdir(%p, %p)\n", dir, info);
 	auto msg = IntercoreModuleFS::ReadDir{
 		.dir = dir->dir,
@@ -255,7 +255,7 @@ FRESULT FS::f_readdir(Dir *dir, Fileinfo *info) {
 	return FR_TIMEOUT;
 }
 
-FRESULT FS::f_findfirst(Dir *dir, Fileinfo *info, const char *path, const char *pattern) {
+FRESULT FatFS::f_findfirst(Dir *dir, Fileinfo *info, const char *path, const char *pattern) {
 	auto fullpath = full_path(path);
 
 	fs_trace("f_findfirst(%p, %p, %s, %s)\n", dir, info, fullpath.c_str(), pattern);
@@ -276,7 +276,7 @@ FRESULT FS::f_findfirst(Dir *dir, Fileinfo *info, const char *path, const char *
 	return FR_TIMEOUT;
 }
 
-FRESULT FS::f_findnext(Dir *dir, Fileinfo *info) {
+FRESULT FatFS::f_findnext(Dir *dir, Fileinfo *info) {
 	fs_trace("f_findnext %p\n", dir);
 
 	auto msg = IntercoreModuleFS::FindNext{
@@ -295,7 +295,7 @@ FRESULT FS::f_findnext(Dir *dir, Fileinfo *info) {
 
 // CREATE DIR
 
-FRESULT FS::f_mkdir(const char *path) {
+FRESULT FatFS::f_mkdir(const char *path) {
 	auto fullpath = full_path(path);
 
 	fs_trace("f_mkdir(%s)\n", fullpath.c_str());
@@ -315,40 +315,40 @@ FRESULT FS::f_mkdir(const char *path) {
 
 // WRITING
 
-FRESULT FS::f_write(File *fp, const void *buff, unsigned btw, unsigned *bw) {
+FRESULT FatFS::f_write(File *fp, const void *buff, unsigned btw, unsigned *bw) {
 	if (write_access) {
 		fs_trace("f_write(%p, ...)\n", fp);
 	}
 	return FR_INT_ERR;
 }
 
-FRESULT FS::f_sync(File *fp) {
+FRESULT FatFS::f_sync(File *fp) {
 	fs_trace("f_sync(%p)\n", fp);
 	if (write_access) {
 	}
 	return FR_INT_ERR;
 }
 
-FRESULT FS::f_truncate(File *fp) {
+FRESULT FatFS::f_truncate(File *fp) {
 	fs_trace("f_truncate(%p)\n", fp);
 	if (write_access) {
 	}
 	return FR_INT_ERR;
 }
 
-int FS::f_putc(char c, File *fp) {
+int FatFS::f_putc(char c, File *fp) {
 	char s[2]{c, 0};
 	return f_puts(s, fp);
 }
 
-int FS::f_puts(const char *str, File *fp) {
+int FatFS::f_puts(const char *str, File *fp) {
 	if (write_access) {
 		fs_trace("f_puts(\"%s\", %p)\n", str, fp);
 	}
 	return FR_INT_ERR;
 }
 
-int FS::f_printf(File *fp, const char *fmt, ...) {
+int FatFS::f_printf(File *fp, const char *fmt, ...) {
 	constexpr int MaxStringSize = 1024;
 
 	va_list args;
@@ -362,7 +362,7 @@ int FS::f_printf(File *fp, const char *fmt, ...) {
 	return f_puts(buf, fp);
 }
 
-FRESULT FS::f_expand(File *fp, uint64_t fsz, uint8_t opt) {
+FRESULT FatFS::f_expand(File *fp, uint64_t fsz, uint8_t opt) {
 	fs_trace("f_expand(%p...)\n", fp);
 	if (write_access) {
 	}
@@ -371,7 +371,7 @@ FRESULT FS::f_expand(File *fp, uint64_t fsz, uint8_t opt) {
 
 // OTHER (write-access)
 
-FRESULT FS::f_unlink(const char *path) {
+FRESULT FatFS::f_unlink(const char *path) {
 	auto fullpath = full_path(path);
 
 	fs_trace("f_unlink(%s)\n", fullpath.c_str());
@@ -381,7 +381,7 @@ FRESULT FS::f_unlink(const char *path) {
 	return FR_INT_ERR;
 }
 
-FRESULT FS::f_rename(const char *path_old, const char *path_new) {
+FRESULT FatFS::f_rename(const char *path_old, const char *path_new) {
 	auto fullpath_old = full_path(path_old);
 	auto fullpath_new = full_path(path_new);
 
@@ -391,7 +391,7 @@ FRESULT FS::f_rename(const char *path_old, const char *path_new) {
 	return FR_INT_ERR;
 }
 
-FRESULT FS::f_utime(const char *path, const Fileinfo *fno) {
+FRESULT FatFS::f_utime(const char *path, const Fileinfo *fno) {
 	auto fullpath = full_path(path);
 
 	fs_trace("f_utime(%s)\n", fullpath.c_str());
@@ -403,7 +403,7 @@ FRESULT FS::f_utime(const char *path, const Fileinfo *fno) {
 
 // Working Dir:
 
-FRESULT FS::f_chdir(const char *path) {
+FRESULT FatFS::f_chdir(const char *path) {
 	fs_trace("f_chdir(%s)\n", path);
 
 	//TODO: ensure ends in a slash
@@ -412,7 +412,7 @@ FRESULT FS::f_chdir(const char *path) {
 	return FR_OK;
 }
 
-FRESULT FS::f_getcwd(char *buff, unsigned len) {
+FRESULT FatFS::f_getcwd(char *buff, unsigned len) {
 	fs_trace("f_getcwd()\n");
 
 	if (buff == nullptr)
@@ -424,64 +424,64 @@ FRESULT FS::f_getcwd(char *buff, unsigned len) {
 	return FR_OK;
 }
 
-void FS::reset_dir(Dir *dp) {
+void FatFS::reset_dir(Dir *dp) {
 	dp->reset();
 	// dp->dir.obj.fs = nullptr;
 }
 
-void FS::reset_file(File *fp) {
+void FatFS::reset_file(File *fp) {
 	fp->reset();
 	// fp->fil.obj.fs = nullptr;
 	// fp->fil.cltbl = nullptr;
 }
 
-bool FS::is_file_reset(File *fp) {
+bool FatFS::is_file_reset(File *fp) {
 	return fp->is_reset();
 	// return fp->fil.obj.fs == nullptr;
 }
 
-bool FS::is_dir_reset(Dir *dp) {
+bool FatFS::is_dir_reset(Dir *dp) {
 	return dp->is_reset();
 	// return dp->dir.obj.fs == nullptr;
 }
 
-bool FS::f_eof(File *fp) {
+bool FatFS::f_eof(File *fp) {
 	return fp->fil.fptr == fp->fil.obj.objsize;
 }
 
-uint8_t FS::f_error(File *fp) {
+uint8_t FatFS::f_error(File *fp) {
 	return fp->fil.err;
 }
 
-uint64_t FS::f_tell(File *fp) {
+uint64_t FatFS::f_tell(File *fp) {
 	return fp->fil.fptr;
 }
 
-uint64_t FS::f_size(File *fp) {
+uint64_t FatFS::f_size(File *fp) {
 	return fp->fil.obj.objsize;
 }
 
-FRESULT FS::f_rewind(File *fp) {
+FRESULT FatFS::f_rewind(File *fp) {
 	return this->f_lseek(fp, 0);
 }
 
-FRESULT FS::f_rewinddir(Dir *dp) {
+FRESULT FatFS::f_rewinddir(Dir *dp) {
 	return this->f_readdir(dp, nullptr);
 }
 
-FRESULT FS::f_rmdir(const char *path) {
+FRESULT FatFS::f_rmdir(const char *path) {
 	return this->f_unlink(path);
 }
 
 // Not supported:
-//FRESULT FS::f_chdrive(const char *path);
-// FRESULT FS::f_getfree(const char *path, DWORD *nclst, FATFS **fatfs); /* Get number of free clusters on the drive */
-// FRESULT FS::f_getlabel(const char *path, char *label, DWORD *vsn);   /* Get volume label */
-// FRESULT FS::f_setlabel(const char *label);							   /* Set volume label */
-// FRESULT FS::f_mount(FATFS *fs, const char *path, uint8_t opt); /* Mount/Unmount a logical drive */
-// FRESULT FS::f_mkfs (const char* path, const MKFS_PARM* opt, void* work, unsigned len);	/* Create a FAT volume */
-// FRESULT FS::f_fdisk(uint8_t pdrv, const LBA_t ptbl[], void *work); /* Divide a physical drive into some partitions */
-// FRESULT FS::f_setcp(WORD cp);					  /* Set current code page */
-// FRESULT FS::f_forward(File *fp, unsigned (*func)(const uint8_t *, unsigned), unsigned btf, unsigned *bf); /* Forward data to the stream */
+//FRESULT FatFS::f_chdrive(const char *path);
+// FRESULT FatFS::f_getfree(const char *path, DWORD *nclst, FATFS **fatfs); /* Get number of free clusters on the drive */
+// FRESULT FatFS::f_getlabel(const char *path, char *label, DWORD *vsn);   /* Get volume label */
+// FRESULT FatFS::f_setlabel(const char *label);							   /* Set volume label */
+// FRESULT FatFS::f_mount(FATFS *fs, const char *path, uint8_t opt); /* Mount/Unmount a logical drive */
+// FRESULT FatFS::f_mkfs (const char* path, const MKFS_PARM* opt, void* work, unsigned len);	/* Create a FAT volume */
+// FRESULT FatFS::f_fdisk(uint8_t pdrv, const LBA_t ptbl[], void *work); /* Divide a physical drive into some partitions */
+// FRESULT FatFS::f_setcp(WORD cp);					  /* Set current code page */
+// FRESULT FatFS::f_forward(File *fp, unsigned (*func)(const uint8_t *, unsigned), unsigned btf, unsigned *bf); /* Forward data to the stream */
 
 } // namespace MetaModule

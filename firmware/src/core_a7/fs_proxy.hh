@@ -1,5 +1,6 @@
 #include "ff.h"
 #include "fs_proxy_impl.hh"
+#include <memory>
 
 namespace MetaModule
 {

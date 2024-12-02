@@ -1,5 +1,4 @@
 #pragma once
-#include "CoreModules/fs_access.hh"
 #include "console/pr_dbg.hh"
 #include "core_intercom/intercore_modulefs_message.hh"
 #include "drivers/cache.hh"
