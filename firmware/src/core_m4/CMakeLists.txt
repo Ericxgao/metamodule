@@ -148,22 +148,7 @@ set_source_files_properties(${FWDIR}/lib/littlefs/lfs.c PROPERTIES COMPILE_OPTIO
 # Fix for ff.c string overfow (false positive?)
 target_link_options(main_m4.elf PUBLIC -Wno-stringop-overflow)
 
-if (ENABLE_WIFI_BRIDGE)
-
-  target_compile_definitions(main_m4.elf PRIVATE
-    ENABLE_WIFI_BRIDGE=1
-  )
-
-  # Add comm functionality
-  add_subdirectory(${FWDIR}/src/wifi/comm ${CMAKE_BINARY_DIR}/wifi_comm)
-
-endif()
-
-# Always add wifi flashing
+# Add wifi comm and flashing
+add_subdirectory(${FWDIR}/src/wifi/comm ${CMAKE_BINARY_DIR}/wifi_comm)
 add_subdirectory(${FWDIR}/src/wifi/flasher ${CMAKE_BINARY_DIR}/wifi_flash)
-
-
-
-
-set(GEN_PATH ${CMAKE_CURRENT_BINARY_DIR})
 
