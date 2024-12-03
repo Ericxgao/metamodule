@@ -53,9 +53,14 @@ struct ModuleFSMessageHandler {
 				},
 
 				[](IntercoreModuleFS::Seek &msg) {
-					pr_trace("M4: f_lseek(%p, %llu) -> %d\n", &msg.fil, msg.file_offset, msg.res);
 					auto pos = msg.file_offset;
+					if (msg.whence == IntercoreModuleFS::Seek::Whence::CurrentPos) {
+						pos += f_tell(&msg.fil);
+					} else if (msg.whence == IntercoreModuleFS::Seek::Whence::End) {
+						pos += f_size(&msg.fil);
+					}
 					msg.res = f_lseek(&msg.fil, pos);
+					pr_trace("M4: f_lseek(%p, %llu) -> %d\n", msg.fil, pos, msg.res);
 					return true;
 				},
 
