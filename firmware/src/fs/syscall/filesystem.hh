@@ -42,6 +42,7 @@ public:
 			if (volume == Volume::RamDisk) {
 				if (mRamdisk) {
 					if (mRamdisk->open(path, file->fatfil)) {
+						file->vol = volume;
 						return *fd;
 					}
 				}
@@ -49,6 +50,7 @@ public:
 
 			if (volume == Volume::SDCard || volume == Volume::USB) {
 				if (fs_proxy.open(path, file->fatfil, mode)) {
+					file->vol = volume;
 					return *fd;
 				}
 			}

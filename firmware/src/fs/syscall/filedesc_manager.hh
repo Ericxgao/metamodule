@@ -8,7 +8,7 @@ namespace MetaModule
 
 struct FileDesc {
 	FIL *fatfil = nullptr;
-	Volume vol{};
+	Volume vol{Volume::MaxVolumes};
 };
 
 namespace FileDescManager
