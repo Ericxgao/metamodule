@@ -14,7 +14,7 @@ public:
 
 	bool open(std::string_view path, FIL *fil, uint8_t mode);
 	int close(FIL *fil);
-	int seek(FIL *fil, int offset, int whence);
+	uint64_t seek(FIL *fil, int offset, int whence);
 	std::optional<size_t> read(FIL *fil, std::span<char> buffer);
 
 private:

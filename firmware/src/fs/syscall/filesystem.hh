@@ -59,7 +59,7 @@ public:
 				}
 			}
 
-			pr_err("Opening file failed\n");
+			pr_err("Opening file %s on vol %d failed\n", filename, (int)volume);
 			FileDescManager::dealloc_file(*fd);
 			return -1;
 
@@ -148,19 +148,20 @@ private:
 	static std::pair<std::string_view, Volume> split_volume(const char *filename) {
 		auto sv = std::string_view{filename};
 
-		if (sv.starts_with("/ram/"))
-			return {sv.substr(5), Volume::RamDisk};
+		if (sv.starts_with("ram:"))
+			return {sv, Volume::RamDisk};
 
-		if (sv.starts_with("/usb/"))
-			return {sv.substr(5), Volume::USB};
+		if (sv.starts_with("usb:"))
+			return {sv, Volume::USB};
 
-		if (sv.starts_with("/sdc/"))
-			return {sv.substr(5), Volume::SDCard};
+		if (sv.starts_with("sdc:"))
+			return {sv, Volume::SDCard};
 
-		if (sv.starts_with("/nor/"))
-			return {sv.substr(5), Volume::NorFlash};
+		if (sv.starts_with("nor:"))
+			return {sv, Volume::NorFlash};
 
 		// Default (no volume given) is RamDisk
+		pr_dbg("No volume found, Default is RamDisk\n");
 		return {sv, Volume::RamDisk};
 	}
 };
