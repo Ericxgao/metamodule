@@ -38,7 +38,7 @@ struct FsProxy {
 		while (!send(message)) {
 
 			if (HAL_GetTick() - start > 3000) {
-				pr_dbg("Sending message timed out\n");
+				pr_dbg("Sending message %zu timed out\n", message.index());
 				return {}; //timeout
 			}
 		}
