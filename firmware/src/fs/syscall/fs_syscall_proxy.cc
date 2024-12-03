@@ -12,11 +12,12 @@ FsSyscallProxy::~FsSyscallProxy() = default;
 
 bool FsSyscallProxy::open(std::string_view path, FIL *fil, uint8_t mode) {
 	auto msg = IntercoreModuleFS::Open{
-		.fil = fil,
+		.fil = *fil, //copy to non-cacheable Message
 		.path = path,
 		.access_mode = mode,
 	};
 	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Open>(msg, 3000)) {
+		*fil = response->fil; //copy back
 		return response->res == FR_OK;
 	}
 	return false;
@@ -24,14 +25,13 @@ bool FsSyscallProxy::open(std::string_view path, FIL *fil, uint8_t mode) {
 
 uint64_t FsSyscallProxy::seek(FIL *fil, int offset, int whence) {
 	auto msg = IntercoreModuleFS::Seek{
-		.fil = fil,
+		.fil = *fil,
 		.file_offset = (uint64_t)offset,
 	};
 
 	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Seek>(msg, 3000)) {
 		if (response->res == FR_OK) {
-			return fil->fptr;
-			// return f_tell(fil);
+			*fil = response->fil;
 		}
 	}
 	return -1;
@@ -46,12 +46,13 @@ std::optional<size_t> FsSyscallProxy::read(FIL *fil, std::span<char> buffer) {
 	}
 
 	auto msg = IntercoreModuleFS::Read{
-		.fil = fil,
+		.fil = *fil,
 		.buffer = impl->file_buffer().subspan(0, bytes_to_read),
 	};
 
 	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Read>(msg, 3000)) {
 		std::copy(response->buffer.begin(), std::next(response->buffer.begin(), response->bytes_read), buffer.data());
+		*fil = response->fil;
 		return response->bytes_read;
 	}
 
@@ -60,10 +61,11 @@ std::optional<size_t> FsSyscallProxy::read(FIL *fil, std::span<char> buffer) {
 
 int FsSyscallProxy::close(FIL *fil) {
 	auto msg = IntercoreModuleFS::Close{
-		.fil = fil,
+		.fil = *fil,
 	};
 
 	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Close>(msg, 3000)) {
+		*fil = response->fil; //copy FIL back
 		return response->res;
 	}
 

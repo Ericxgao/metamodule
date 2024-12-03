@@ -41,29 +41,30 @@ struct ModuleFSMessageHandler {
 				// READING:
 
 				[](IntercoreModuleFS::Open &msg) {
-					msg.res = f_open(msg.fil, msg.path.c_str(), msg.access_mode);
-					pr_trace("M4: f_open(%p, %s, %d) -> %d\n", &msg.fil, msg.path.c_str(), msg.access_mode, msg.res);
+					msg.res = f_open(&msg.fil, msg.path.c_str(), msg.access_mode);
+					pr_trace("M4: f_open(%p, %s, %d) -> %d\n", msg.fil, msg.path.c_str(), msg.access_mode, msg.res);
 					return true;
 				},
 
 				[](IntercoreModuleFS::Close &msg) {
-					msg.res = f_close(msg.fil);
+					msg.res = f_close(&msg.fil);
 					pr_trace("M4: f_close(%p) -> %d\n", msg.fil, msg.res);
 					return true;
 				},
 
 				[](IntercoreModuleFS::Seek &msg) {
-					msg.res = f_lseek(msg.fil, msg.file_offset);
 					pr_trace("M4: f_lseek(%p, %llu) -> %d\n", &msg.fil, msg.file_offset, msg.res);
+					auto pos = msg.file_offset;
+					msg.res = f_lseek(&msg.fil, pos);
 					return true;
 				},
 
 				[](IntercoreModuleFS::Read &msg) {
 					UINT bytes_read = 0;
-					msg.res = f_read(msg.fil, msg.buffer.data(), msg.buffer.size(), &bytes_read);
+					msg.res = f_read(&msg.fil, msg.buffer.data(), msg.buffer.size(), &bytes_read);
 					msg.bytes_read = bytes_read;
 					pr_trace("M4: f_read(%p, %p, %zu, -> %u) -> %d\n",
-							 &msg.fil,
+							 msg.fil,
 							 msg.buffer.data(),
 							 msg.buffer.size(),
 							 bytes_read,

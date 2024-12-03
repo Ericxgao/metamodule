@@ -94,13 +94,13 @@ FRESULT FatFS::f_open(File *fp, const char *path, uint8_t mode) {
 	fs_trace("f_open(%p, \"%s\", %d)\n", fp, fullpath.c_str(), mode);
 
 	auto msg = IntercoreModuleFS::Open{
-		.fil = &fp->fil,
+		.fil = fp->fil,
 		.path = std::string_view{fullpath},
 		.access_mode = mode,
 	};
 
 	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Open>(msg, 3000)) {
-		// fp->fil = response->fil; //copy FIL back
+		fp->fil = response->fil; //copy FIL back
 		return response->res;
 	}
 
@@ -111,11 +111,11 @@ FRESULT FatFS::f_close(File *fil) {
 	fs_trace("f_close(%p)\n", fil);
 
 	auto msg = IntercoreModuleFS::Close{
-		.fil = &fil->fil,
+		.fil = fil->fil,
 	};
 
 	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Close>(msg, 3000)) {
-		// fil->fil = response->fil;
+		fil->fil = response->fil;
 		return response->res;
 	}
 
@@ -126,12 +126,12 @@ FRESULT FatFS::f_lseek(File *fil, uint64_t offset) {
 	fs_trace("f_lseek(%p, %lld)\n", fil, offset);
 
 	auto msg = IntercoreModuleFS::Seek{
-		.fil = &fil->fil,
+		.fil = fil->fil,
 		.file_offset = offset,
 	};
 
 	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Seek>(msg, 3000)) {
-		// fil->fil = response->fil; //copy File back
+		fil->fil = response->fil; //copy File back
 		return response->res;
 	}
 
@@ -147,12 +147,12 @@ FRESULT FatFS::f_read(File *fil, void *buff, unsigned bytes_to_read, unsigned *b
 	}
 
 	auto msg = IntercoreModuleFS::Read{
-		.fil = &fil->fil,
+		.fil = fil->fil,
 		.buffer = impl->file_buffer().subspan(0, bytes_to_read),
 	};
 
 	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Read>(msg, 3000)) {
-		// fil->fil = response->fil;
+		fil->fil = response->fil;
 		*br = response->bytes_read;
 		std::copy(response->buffer.begin(), std::next(response->buffer.begin(), response->bytes_read), (char *)buff);
 
