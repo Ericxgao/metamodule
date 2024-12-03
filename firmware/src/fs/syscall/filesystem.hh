@@ -1,30 +1,34 @@
 #pragma once
-
-// fopen()
-// -> newlib/libc++
-// -> _open()
-// -> MetaModule::Filesystem::open
-// Ramdisk -> RamDisk::open()
-//         -> FatFileIO::open()
-// 		   -> f_open() .... fatfs ops
-//
-// USB/SD  -> FSProxy::open
-//         -> FSProxyImpl::
-//         -> Core M4 handler
-
 #include "fat_file_io.hh"
 #include "ff.h"
 #include "filedesc_manager.hh"
-#include "fs_proxy.hh"
+#include "fs_syscall_proxy.hh"
 #include <sys/stat.h>
 #include <unistd.h>
+
+// MetaModule::Filesystem is a wrapper for filesystem syscalls (fopen, fread, etc)
+// to access the various FatFS volume on the MetaModule (RamDisk, SD, USB)
+//
+// Example call chain:
+// fopen():
+// -> newlib/libc functions (defined in libc.a)
+// -> _open() (defined in fs/syscall/syscalls.cc)
+// -> MetaModule::Filesystem::open (defined in this file)
+// If the volume is:
+//   Ramdisk -> RamDisk::open()
+//           -> FatFileIO::open()
+//           -> f_open() (defined in fatfs/source/ff.c)
+//
+//   USB/SD  -> FSProxy::open
+//           -> FSProxyImpl::
+//           -> Core M4 handler
 
 namespace MetaModule
 {
 
 class Filesystem {
 	static inline FatFileIO *mRamdisk{nullptr};
-	static inline FSProxy fs_proxy;
+	static inline FsSyscallProxy fs_proxy;
 
 public:
 	static void init(FatFileIO &ramdisk) {

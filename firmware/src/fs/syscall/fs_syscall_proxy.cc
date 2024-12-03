@@ -1,16 +1,16 @@
-#include "fs_proxy.hh"
+#include "fs_syscall_proxy.hh"
 #include "ff.h"
 
 namespace MetaModule
 {
 
-FSProxy::FSProxy()
-	: impl{std::make_unique<FSProxyImpl>()} {
+FsSyscallProxy::FsSyscallProxy()
+	: impl{std::make_unique<FsProxy>()} {
 }
 
-FSProxy::~FSProxy() = default;
+FsSyscallProxy::~FsSyscallProxy() = default;
 
-bool FSProxy::open(std::string_view path, FIL *fil, uint8_t mode) {
+bool FsSyscallProxy::open(std::string_view path, FIL *fil, uint8_t mode) {
 	auto msg = IntercoreModuleFS::Open{
 		.fil = fil,
 		.path = path,
@@ -22,7 +22,7 @@ bool FSProxy::open(std::string_view path, FIL *fil, uint8_t mode) {
 	return false;
 }
 
-int FSProxy::seek(FIL *fil, int offset, int whence) {
+int FsSyscallProxy::seek(FIL *fil, int offset, int whence) {
 	auto msg = IntercoreModuleFS::Seek{
 		.fil = fil,
 		.file_offset = (uint64_t)offset,
@@ -37,7 +37,7 @@ int FSProxy::seek(FIL *fil, int offset, int whence) {
 	return -1;
 }
 
-std::optional<size_t> FSProxy::read(FIL *fil, std::span<char> buffer) {
+std::optional<size_t> FsSyscallProxy::read(FIL *fil, std::span<char> buffer) {
 	auto bytes_to_read = buffer.size();
 
 	if (bytes_to_read > impl->file_buffer().size()) {
@@ -58,7 +58,7 @@ std::optional<size_t> FSProxy::read(FIL *fil, std::span<char> buffer) {
 	return {};
 }
 
-int FSProxy::close(FIL *fil) {
+int FsSyscallProxy::close(FIL *fil) {
 	auto msg = IntercoreModuleFS::Close{
 		.fil = fil,
 	};

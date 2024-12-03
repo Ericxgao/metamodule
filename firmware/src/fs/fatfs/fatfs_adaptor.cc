@@ -2,7 +2,7 @@
 #include "console/pr_dbg.hh"
 #include "core_intercom/intercore_modulefs_message.hh"
 #include "drivers/inter_core_comm.hh"
-#include "fs_proxy_impl.hh"
+#include "fs_proxy.hh"
 #include "util/padded_aligned.hh"
 #include <cstdarg>
 #include <cstring>
@@ -32,7 +32,7 @@ static inline void fs_trace(auto... args) {
 }
 
 FatFS::FatFS(std::string_view root)
-	: impl{new FSProxyImpl()} {
+	: impl{new FsProxy()} {
 }
 
 FatFS::~FatFS() = default;
