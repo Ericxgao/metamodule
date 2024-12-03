@@ -8,7 +8,7 @@ void _fini(void) {
 void *__dso_handle = (void *)&__dso_handle;
 
 void _exit(int x) {
-	printf("_exit\n");
+	puts("_exit\n");
 	while (1)
 		;
 }

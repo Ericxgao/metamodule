@@ -215,7 +215,7 @@ public:
 		} else if (whenc == SEEK_CUR) {
 			t = f_lseek(fil, f_tell(fil) + offset);
 		} else if (whenc == SEEK_END) {
-			t = f_lseek(fil, f_size(fil) - offset);
+			t = f_lseek(fil, f_size(fil) + offset);
 		}
 
 		if (t != FR_OK) {
