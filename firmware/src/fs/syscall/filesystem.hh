@@ -53,7 +53,7 @@ public:
 			}
 
 			if (volume == Volume::SDCard || volume == Volume::USB) {
-				if (fs_proxy.open(path, file->fatfil, mode)) {
+				if (fs_proxy.open(path, file->fatfil, FA_READ)) {
 					file->vol = volume;
 					return *fd;
 				}

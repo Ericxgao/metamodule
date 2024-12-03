@@ -22,7 +22,7 @@ bool FsSyscallProxy::open(std::string_view path, FIL *fil, uint8_t mode) {
 	return false;
 }
 
-int FsSyscallProxy::seek(FIL *fil, int offset, int whence) {
+uint64_t FsSyscallProxy::seek(FIL *fil, int offset, int whence) {
 	auto msg = IntercoreModuleFS::Seek{
 		.fil = fil,
 		.file_offset = (uint64_t)offset,
