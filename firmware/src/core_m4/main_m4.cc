@@ -89,6 +89,8 @@ void main() {
 
 		fs_messages.process();
 
+		module_fs_messages.process();
+
 		WifiInterface::run();
 	}
 }
