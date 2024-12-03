@@ -16,6 +16,8 @@
 #include "ff.h"
 #include "filedesc_manager.hh"
 #include "fs_proxy.hh"
+#include <sys/stat.h>
+#include <unistd.h>
 
 namespace MetaModule
 {
@@ -116,6 +118,24 @@ public:
 			return 0;
 		}
 		return -1;
+	}
+
+	static int isatty(int fd) {
+		return FileDescManager::isatty(fd);
+	}
+
+	static int fstat(int fd, struct stat *st) {
+		if (FileDescManager::isatty(fd)) {
+			st->st_mode = S_IFCHR;
+			return 0;
+
+		} else if (FileDescManager::filedesc(fd)) {
+			st->st_mode = S_IFREG;
+			return 0;
+
+		} else {
+			return -1;
+		}
 	}
 
 private:

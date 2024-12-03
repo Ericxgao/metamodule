@@ -15,9 +15,12 @@ namespace FileDescManager
 {
 
 void init();
+
 std::optional<int> alloc_file();
 void dealloc_file(size_t fd);
+
 FileDesc *filedesc(size_t fd);
+int isatty(int fd);
 
 } // namespace FileDescManager
 } // namespace MetaModule

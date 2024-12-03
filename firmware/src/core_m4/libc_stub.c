@@ -13,3 +13,11 @@ int _lseek(int fd, int offset, int whenc) {
 int _read(int fd, char *ptr, int len) {
 	return -1;
 }
+
+int _fstat(int x, void *p) {
+	return 0;
+}
+
+int _isatty(int fd) {
+	return 0;
+}
