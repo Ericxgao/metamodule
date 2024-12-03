@@ -101,9 +101,11 @@ void main() {
 	pr_info("A7 Core 1 initialized\n");
 	// Note: from after the HAL_Delay(50) until here, it takes 20ms
 
-	pr_dbg("Stopping UART buffer\n");
+#ifdef CONSOLE_USE_USB
+	printf("Stopping UART buffer\n");
 	UartLog::use_usb(&StaticBuffers::console_a7_0_buff);
-	pr_dbg("Using USB buffer\n");
+	printf("Using USB buffer\n");
+#endif
 
 	// Tell other cores we're done with init
 	mdrivlib::HWSemaphore<MainCoreReady>::unlock();
