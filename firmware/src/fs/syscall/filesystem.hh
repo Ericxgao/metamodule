@@ -161,7 +161,6 @@ private:
 			return {sv, Volume::NorFlash};
 
 		// Default (no volume given) is RamDisk
-		pr_dbg("No volume found, Default is RamDisk\n");
 		return {sv, Volume::RamDisk};
 	}
 };
