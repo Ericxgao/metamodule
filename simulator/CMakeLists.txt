@@ -71,6 +71,7 @@ add_executable(
 	stubs/memory/heap.cc
 	stubs/async_thread.cc
 	stubs/fs/fatfs_adaptor.cc
+	stubs/fs/fs_proxy.cc
 
     ${FWDIR}/src/gui/elements/element_name.cc
     ${FWDIR}/src/gui/slsexport/ui_local.cc

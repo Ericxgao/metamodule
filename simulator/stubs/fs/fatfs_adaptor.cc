@@ -1,6 +1,6 @@
 #include "CoreModules/fatfs_adaptor.hh"
 #include "ff_host.hh"
-#include <array>
+#include "fs/fs_proxy.hh"
 #include <cstdarg>
 #include <cstring>
 #include <filesystem>
@@ -28,25 +28,18 @@ struct FsProxy {
 	// not used in simulator
 };
 
-FatFS::FatFS(std::string_view root)
-	: impl{new FsProxy(root)} {
+FatFS::FatFS(std::string_view root) {
 }
 
 FatFS::~FatFS() = default;
 
 // Valid Root
 
-// FIXME: needs to match command-line args
-std::array<std::string_view, 2> valid_roots{
-	"./patches/",
-	"../patches/",
-};
-
 bool FatFS::find_valid_root(std::string_view path) {
 	auto t_root = root;
 	auto t_cwd = cwd;
 
-	for (auto rt : valid_roots) {
+	for (auto [_, rt] : get_volume_host_paths()) {
 		root = rt;
 		cwd = "";
 
@@ -103,7 +96,7 @@ FRESULT FatFS::f_open(File *fp, const char *path, uint8_t mode) {
 							mode == (FA_CREATE_NEW | FA_WRITE | FA_READ)	? "w+x" :
 																			  "";
 
-	fp->fil = std::fopen(path, posixmode.c_str());
+	fp->fil = std::fopen(fullpath.c_str(), posixmode.c_str());
 
 	if (fp->fil == nullptr)
 		return FR_NO_FILE;
@@ -122,7 +115,7 @@ FRESULT FatFS::f_close(File *fil) {
 }
 
 FRESULT FatFS::f_lseek(File *fil, uint64_t offset) {
-	fs_trace("f_lseek(%p, %lld)\n", fil, offset);
+	fs_trace("f_lseek(%p, %llu)\n", fil, offset);
 
 	if (!fil)
 		return FR_INVALID_PARAMETER;
@@ -188,20 +181,18 @@ FRESULT FatFS::f_opendir(Dir *dir, const char *path) {
 
 	fs_trace("f_opendir(%p, %s)\n", dir, fullpath.c_str());
 
-	if (!dir)
+	if (!dir) {
 		return FR_INVALID_PARAMETER;
-
-	try {
-		if (std::filesystem::is_directory(path)) {
-			dir->path = path;
-			dir->reset();
-			return FR_OK;
-		}
-	} catch (std::exception &e) {
-		//not an error
 	}
 
-	return FR_NO_PATH;
+	if (std::filesystem::is_directory(fullpath)) {
+		dir->path = path;
+		dir->reset();
+		return FR_OK;
+
+	} else {
+		return FR_NO_PATH;
+	}
 }
 
 FRESULT FatFS::f_closedir(Dir *dir) {
@@ -280,39 +271,28 @@ FRESULT FatFS::f_findnext(Dir *dir, Fileinfo *info) {
 FRESULT FatFS::f_mkdir(const char *path) {
 	auto fullpath = full_path(path);
 
-	fs_trace("f_mkdir(%s)\n", fullpath.c_str());
-
-	// if (write_access) {
-	// 	auto msg = IntercoreModuleFS::MkDir{
-	// 		.path = fullpath.c_str(),
-	// 	};
-
-	// 	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::MkDir>(msg, 3000)) {
-	// 		return response->res;
-	// 	}
-	// }
-
-	return FR_TIMEOUT;
+	fs_trace("f_mkdir(%s) [not implemented]\n", fullpath.c_str());
+	return FR_INT_ERR;
 }
 
 // WRITING
 
 FRESULT FatFS::f_write(File *fp, const void *buff, unsigned btw, unsigned *bw) {
 	if (write_access) {
-		fs_trace("f_write(%p, ...)\n", fp);
+		fs_trace("f_write(%p, ...) [not implemented]\n", fp);
 	}
 	return FR_INT_ERR;
 }
 
 FRESULT FatFS::f_sync(File *fp) {
-	fs_trace("f_sync(%p)\n", fp);
+	fs_trace("f_sync(%p) [not implemented]\n", fp);
 	if (write_access) {
 	}
 	return FR_INT_ERR;
 }
 
 FRESULT FatFS::f_truncate(File *fp) {
-	fs_trace("f_truncate(%p)\n", fp);
+	fs_trace("f_truncate(%p) [not implemented]\n", fp);
 	if (write_access) {
 	}
 	return FR_INT_ERR;
@@ -325,7 +305,7 @@ int FatFS::f_putc(char c, File *fp) {
 
 int FatFS::f_puts(const char *str, File *fp) {
 	if (write_access) {
-		fs_trace("f_puts(\"%s\", %p)\n", str, fp);
+		fs_trace("f_puts(\"%s\", %p) [not implemented]\n", str, fp);
 	}
 	return FR_INT_ERR;
 }
@@ -345,7 +325,7 @@ int FatFS::f_printf(File *fp, const char *fmt, ...) {
 }
 
 FRESULT FatFS::f_expand(File *fp, FSIZE_t fsz, uint8_t opt) {
-	fs_trace("f_expand(%p...)\n", fp);
+	fs_trace("f_expand(%p...) [not implemented]\n", fp);
 	if (write_access) {
 	}
 	return FR_INT_ERR;
@@ -356,7 +336,7 @@ FRESULT FatFS::f_expand(File *fp, FSIZE_t fsz, uint8_t opt) {
 FRESULT FatFS::f_unlink(const char *path) {
 	auto fullpath = full_path(path);
 
-	fs_trace("f_unlink(%s)\n", fullpath.c_str());
+	fs_trace("f_unlink(%s) [not implemented]\n", fullpath.c_str());
 
 	if (write_access) {
 	}
@@ -367,7 +347,7 @@ FRESULT FatFS::f_rename(const char *path_old, const char *path_new) {
 	auto fullpath_old = full_path(path_old);
 	auto fullpath_new = full_path(path_new);
 
-	fs_trace("f_rename(%s, %s)\n", path_old, path_new);
+	fs_trace("f_rename(%s, %s) [not implemented] \n", path_old, path_new);
 	if (write_access) {
 	}
 	return FR_INT_ERR;
@@ -376,7 +356,7 @@ FRESULT FatFS::f_rename(const char *path_old, const char *path_new) {
 FRESULT FatFS::f_utime(const char *path, const Fileinfo *fno) {
 	auto fullpath = full_path(path);
 
-	fs_trace("f_utime(%s)\n", fullpath.c_str());
+	fs_trace("f_utime(%s) [not implemented]\n", fullpath.c_str());
 
 	if (write_access) {
 	}
@@ -406,43 +386,73 @@ FRESULT FatFS::f_getcwd(char *buff, unsigned len) {
 	return FR_OK;
 }
 
-void FatFS::reset_dir(Dir *dp) {
-	// dp->obj.fs = nullptr;
-}
-
 void FatFS::reset_file(File *fp) {
-	// fp->obj.fs = nullptr;
-	// fp->cltbl = nullptr;
+	if (fp)
+		fp->reset();
 }
 
 bool FatFS::is_file_reset(File *fp) {
-	// return fp->obj.fs == nullptr;
-	return true;
+
+	if (fp)
+		return fp->is_reset();
+	else
+		return true;
 }
 
 bool FatFS::f_eof(File *fp) {
-	// return fp->fptr == fp->obj.objsize;
-	return true;
+	if (!fp)
+		return false;
+
+	auto cur_pos = std::ftell(fp->fil); //save position
+
+	std::fseek(fp->fil, 0, SEEK_END);	   // seek to end
+	size_t filesize = std::ftell(fp->fil); // measure size
+
+	std::fseek(fp->fil, cur_pos, SEEK_SET); // restore position
+
+	return cur_pos >= filesize;
 }
 
 uint8_t FatFS::f_error(File *fp) {
-	// return fp->err;
-	return 0xFF;
+	if (!fp)
+		return 0xFF;
+
+	return 0x0;
 }
 
 FSIZE_t FatFS::f_tell(File *fp) {
-	// return fp->fptr;
-	return 0;
+	if (!fp)
+		return 0;
+	return std::ftell(fp->fil);
 }
 
 FSIZE_t FatFS::f_size(File *fp) {
-	// return fp->obj.objsize;
-	return 0;
+	if (!fp)
+		return 0;
+
+	auto cur_pos = std::ftell(fp->fil); //save position
+
+	std::fseek(fp->fil, 0, SEEK_END);	   // seek to end
+	size_t filesize = std::ftell(fp->fil); // measure size
+
+	std::fseek(fp->fil, cur_pos, SEEK_SET); // restore position
+
+	fs_trace("f_size(%p) -> %llu\n", fp, filesize);
+	return filesize;
+}
+
+void FatFS::reset_dir(Dir *dp) {
+	if (dp) {
+		dp->reset();
+	}
 }
 
 FRESULT FatFS::f_rewind(File *fp) {
-	// return this->f_lseek(fp, 0);
-	return FR_INT_ERR;
+	if (fp) {
+		std::fseek(fp->fil, 0, SEEK_SET);
+		return FR_OK;
+	} else
+		return FR_INT_ERR;
 }
 
 FRESULT FatFS::f_rewinddir(Dir *dp) {

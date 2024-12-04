@@ -16,10 +16,15 @@ struct File {
 
 	void reset() {
 		// fil.obj.fs = nullptr;
+		if (fil) {
+			std::fclose(fil);
+			delete fil;
+			fil = nullptr;
+		}
 	}
 
 	bool is_reset() {
-		return true;
+		return fil == nullptr;
 		// return fil.obj.fs == nullptr;
 	}
 };
