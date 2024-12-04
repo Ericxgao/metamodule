@@ -137,6 +137,7 @@ FRESULT FatFS::f_lseek(File *fil, uint64_t offset) {
 	auto msg = IntercoreModuleFS::Seek{
 		.fil = fil->fil,
 		.file_offset = offset,
+		.whence = IntercoreModuleFS::Seek::Whence::Beginning,
 	};
 
 	if (auto response = impl->get_response_or_timeout<IntercoreModuleFS::Seek>(msg, 3000)) {
