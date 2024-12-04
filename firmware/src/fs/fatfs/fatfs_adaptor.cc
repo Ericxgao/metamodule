@@ -19,21 +19,28 @@ extern IntercoreModuleFS::Message icc_module_fs_message_core0;
 extern IntercoreModuleFS::Message icc_module_fs_message_core1;
 } // namespace StaticBuffers
 
+namespace
+{
+
 static constexpr bool print_fs_calls = false;
 static constexpr bool write_access = false;
 
-static inline void fs_trace(const char *str) {
+void fs_trace(const char *str) {
 	if constexpr (print_fs_calls)
 		printf("%s", str);
 }
 
-static inline void fs_trace(auto... args) {
+void fs_trace(auto... args) {
 	if constexpr (print_fs_calls)
 		printf(args...);
 }
 
+} // namespace
+
 FatFS::FatFS(std::string_view root)
-	: impl{new FsProxy()} {
+	: impl{new FsProxy()}
+	, root{}
+	, cwd{} {
 }
 
 FatFS::~FatFS() = default;
@@ -43,6 +50,7 @@ std::array<std::string_view, 2> valid_roots{
 	"1:/", //SD Card
 };
 
+// Tries to find the given path on mounted volumes
 bool FatFS::find_valid_root(std::string_view path) {
 	auto t_root = root;
 	auto t_cwd = cwd;
@@ -67,7 +75,7 @@ bool FatFS::find_valid_root(std::string_view path) {
 
 		if (is_valid_root) {
 			cwd = path;
-			printf("Found valid root %s\n", full_path("").c_str());
+			pr_dbg("Found valid root '%s'\n", path.data());
 			return true;
 		}
 	}
@@ -75,7 +83,7 @@ bool FatFS::find_valid_root(std::string_view path) {
 	// no valid root found. restore previous values
 	root = t_root;
 	cwd = t_cwd;
-	printf("No valid root found\n");
+	pr_dbg("No valid root found\n");
 
 	return false;
 }
@@ -92,7 +100,7 @@ FRESULT FatFS::f_open(File *fp, const char *path, uint8_t mode) {
 	if (!write_access)
 		mode &= ~(FA_WRITE | FA_CREATE_NEW | FA_CREATE_ALWAYS | FA_OPEN_APPEND);
 
-	fs_trace("f_open(%p, \"%s\", %d)\n", fp, fullpath.c_str(), mode);
+	fs_trace("f_open(%p, '%s', %d)\n", &fp->fil, fullpath.c_str(), mode);
 
 	auto msg = IntercoreModuleFS::Open{
 		.fil = fp->fil,
@@ -109,7 +117,7 @@ FRESULT FatFS::f_open(File *fp, const char *path, uint8_t mode) {
 }
 
 FRESULT FatFS::f_close(File *fil) {
-	fs_trace("f_close(%p)\n", fil);
+	fs_trace("f_close(%p)\n", &fil->fil);
 
 	auto msg = IntercoreModuleFS::Close{
 		.fil = fil->fil,
@@ -124,7 +132,7 @@ FRESULT FatFS::f_close(File *fil) {
 }
 
 FRESULT FatFS::f_lseek(File *fil, uint64_t offset) {
-	fs_trace("f_lseek(%p, %lld)\n", fil, offset);
+	fs_trace("f_lseek(%p, %lld)\n", &fil->fil, offset);
 
 	auto msg = IntercoreModuleFS::Seek{
 		.fil = fil->fil,
@@ -140,7 +148,7 @@ FRESULT FatFS::f_lseek(File *fil, uint64_t offset) {
 }
 
 FRESULT FatFS::f_read(File *fil, void *buff, unsigned bytes_to_read, unsigned *br) {
-	fs_trace("f_read(%p, %p, %u, ...)\n", fil, buff, bytes_to_read);
+	fs_trace("f_read(%p, %p, %u, ...)\n", &fil->fil, buff, bytes_to_read);
 
 	if (bytes_to_read > impl->file_buffer().size()) {
 		pr_err("Cannot f_read %d bytes\n", bytes_to_read);
@@ -163,7 +171,7 @@ FRESULT FatFS::f_read(File *fil, void *buff, unsigned bytes_to_read, unsigned *b
 }
 
 char *FatFS::f_gets(char *buffer, int len, File *fil) {
-	fs_trace("f_gets(%p, %d, %p)\n", buffer, len, fil);
+	fs_trace("f_gets(%p, %d, %p)\n", buffer, len, &fil->fil);
 
 	if ((size_t)len > impl->file_buffer().size()) {
 		pr_err("Cannot f_gets %d bytes\n", len);
